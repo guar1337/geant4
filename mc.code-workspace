@@ -8,7 +8,8 @@
 		"editor.tabSize": 3,
 		"editor.insertSpaces": false,
 		"files.associations": {
-			"*.icc": "cpp"
+			"*.icc": "cpp",
+			"new": "cpp"
 		}
 	}
 }

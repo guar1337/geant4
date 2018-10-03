@@ -1,7 +1,5 @@
 #include "ActionInitialization.hh"
 #include "PrimaryGeneratorAction.hh"
-#include "EventAction.hh"
-#include "DetectorConstruction.hh"
 
 ActionInitialization::ActionInitialization()
  : G4VUserActionInitialization()

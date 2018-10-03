@@ -8,14 +8,12 @@
 #include "G4ThreeVector.hh"
 #include "DetectorConstruction.hh"
 
-//#include "G4ParticleGun.hh"
 #include "G4ParticleTable.hh"
 #include "G4IonTable.hh"
 #include "G4EmCalculator.hh"
 #include "G4NistManager.hh"
 #include "G4Material.hh"
 
-//class G4ParticleGun;
 class G4Event;
 class G4Box;
 
@@ -44,7 +42,7 @@ class G4Box;
 		double massNeut;
 		double mass10Li;
 
-		double Ex6He;
+		double excitedStateEnergy_6He;
 		double massSum;
 		double beam_spot_radius;
 		double tar_thick;

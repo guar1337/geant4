@@ -1,18 +1,18 @@
 #ifndef EventAction_h
 #define EventAction_h 1
 
-#include "G4IonTable.hh"
-#include "G4UserEventAction.hh"
 #include "G4VUserPrimaryParticleInformation.hh"
-#include <G4EmCalculator.hh>
-#include "G4NistManager.hh"
+#include "G4UserEventAction.hh"
+#include "G4LorentzVector.hh"
+#include "G4IonTable.hh"
+
 #include "globals.hh"
 #include "/home/guar/root/build/include/TTree.h"
 #include "/home/guar/root/build/include/TFile.h"
-#include "G4LorentzVector.hh"
-//#include "/home/guar/root/build/include/TLorentzVector.h"
-#include "/home/guar/root/build/include/TVector3.h"
 #include "ParticleInfo.hh"
+#include "/home/guar/root/build/include/TLorentzVector.h"
+
+
 
 /// Event action class
 ///
@@ -26,14 +26,12 @@ class EventAction : public G4UserEventAction
 {
 	public:
 	EventAction();
-	EventAction(TTree* T);
+	EventAction(TTree *T);
 	virtual ~EventAction();
 
 	virtual void	BeginOfEventAction(const G4Event* event);
 	virtual void	EndOfEventAction(const G4Event* event);
 	
-
-	G4Material* Deut_target;
 	G4double CsIdeut[16];
 	G4double SideutX[16];
 	G4double SideutY[16];
@@ -85,26 +83,33 @@ class EventAction : public G4UserEventAction
 	G4double reTheta2H;
 	G4double reTheta6He;
 
-	G4ParticleTable* particletable;
-	G4IonTable* iontable;
-	G4ParticleDefinition * def6He;
-	G4ParticleDefinition * def4He;
-	G4ParticleDefinition * def2H;
+	G4ParticleTable *particletable;
+	G4IonTable *iontable;
+	G4ParticleDefinition *def6He;
+	G4ParticleDefinition *def4He;
+	G4ParticleDefinition *def2H;
 
 	private:
 	TTree* tree;
-	G4EmCalculator* ELC;
 	G4int	fsiliconHCID;
 	G4int	fcesiumHCID;
 
-	G4ThreeVector *v2H;
-	G4ThreeVector *v6He;
-	G4ThreeVector *vBEAM;
-	G4ThreeVector *vDeutCM;	
 
-	G4LorentzVector *lv2H;
-	G4LorentzVector *lv6He;
-	G4LorentzVector *lvBEAM;
-	G4LorentzVector *lvDeutCM;	
+	//From PrimaryVertex
+	TVector3 *v2H;
+	TVector3 *v6He;
+
+	//From PrimaryVertex
+	TLorentzVector *lv2H;
+	TLorentzVector *lv6He;
+	//From ParticleInfo
+	TLorentzVector *lvBeam;
+	TLorentzVector *lv2H_CM;
+	TLorentzVector *lv6He_CM;
+	//temporary holders for G4LorentzVector (aka CLHEP::HepLorentzVector)
+	G4LorentzVector *tmp_lvBeam;
+	G4LorentzVector *tmp_lv2H_CM;
+	G4LorentzVector *tmp_lv6He_CM;
+
 };
 #endif
