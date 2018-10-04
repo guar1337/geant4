@@ -60,17 +60,16 @@ class G4Box;
 		double Range;
 		
 		double Vertex_X, Vertex_Y, Vertex_Z;		
+	
 		
-		//G4ParticleGun*	fParticleGun; // pointer a to G4 gun class
-		
-		G4ParticleTable* particletable;
+		G4ParticleTable *particletable;
 		G4IonTable* iontable;
-		G4ParticleDefinition * def6He;
-		G4ParticleDefinition * def4He;
-		G4ParticleDefinition * def2H;
-		G4ParticleDefinition * defProt;
-		G4ParticleDefinition * defNeut;
-		G4ParticleDefinition * defAngel;
+		G4ParticleDefinition *def6He;
+		G4ParticleDefinition *def4He;
+		G4ParticleDefinition *def2H;
+		G4ParticleDefinition *defProt;
+		G4ParticleDefinition *defNeut;
+		G4ParticleDefinition *defAngel;
 		G4VUserPrimaryParticleInformation* partINFO;
 		
 		//G4ThreeVector VertexPosition;

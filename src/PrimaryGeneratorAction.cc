@@ -15,7 +15,7 @@
 #include <iostream>
 #include <iomanip> 
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......	
+	
 
 	PrimaryGeneratorAction::PrimaryGeneratorAction()
 	: G4VUserPrimaryGeneratorAction()
@@ -25,32 +25,28 @@
 	iontable = G4IonTable::GetIonTable();
 	defProt=particletable->FindParticle("proton");
 	defNeut=particletable->FindParticle("neutron");
-	defAngel=particletable->FindParticle("geantino");
+	def6He = iontable->GetIon(2,6);
+	def4He = iontable->GetIon(2,4);
+	def2H = iontable->GetIon(1,2);
 
 	ELC= new G4EmCalculator();
 	G4NistManager* man = G4NistManager::Instance();
 	man->SetVerbose(0);
 	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
 	
-	beam_spot_radius=7.5*mm;
-	tar_thick=20*um;
-	excitedStateEnergy_6He=1797*keV;
+	const float beam_spot_radius = 7.5*mm;
+	const float tar_thick = 20.0*um;
+	const float excitedStateEnergy_6He = 1797*keV;
 	}
 	
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 	PrimaryGeneratorAction::~PrimaryGeneratorAction()
 	{
 	}
 	
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 	void
 	PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	{
-	def6He = iontable->GetIon(2,6);
-	def4He = iontable->GetIon(2,4);
-	def2H = iontable->GetIon(1,2);
+
 
 	mass6He=def6He->GetPDGMass();
 	mass4He=def4He->GetPDGMass();
@@ -68,7 +64,7 @@
 	Vertex_X = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
 	Vertex_Y = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
 	relative_Z_position = CLHEP::RandFlat::shoot(-1.4142*tar_thick, 1.4142*tar_thick);
-	Vertex_Z = relative_Z_position*um-Vertex_X*mm;	
+	Vertex_Z = relative_Z_position*um-Vertex_X*mm;
 	G4ThreeVector VertexPosition(Vertex_X,Vertex_Y,Vertex_Z);
 
 	//Eloss estimation - CHECK
@@ -266,5 +262,5 @@ PrimaryGeneratorAction::get_R(G4double E, G4Material* mat)
 	return R0;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
 
