@@ -6,6 +6,9 @@
 #include "globals.hh"
 #include "G4PrimaryVertex.hh"
 #include "G4ThreeVector.hh"
+#include "/home/guar/root/build/include/TLorentzVector.h"
+
+#include "TTree.h"
 #include "DetectorConstruction.hh"
 
 #include "G4ParticleTable.hh"
@@ -17,15 +20,11 @@
 class G4Event;
 class G4Box;
 
-#include <fstream>
-#include <iostream>
-#include <vector>
-
 
 	class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
 	{
 	public:
-		PrimaryGeneratorAction();		
+		PrimaryGeneratorAction();
 		virtual ~PrimaryGeneratorAction();
 		
 		// method from the base class
@@ -51,35 +50,35 @@ class G4Box;
 		
 		G4ThreeVector MD2H;
 		G4ThreeVector MD6He;
-		G4Material* Deut_target;
+		G4Material *Deut_target;
 	private:
 		bool target_losses;
-	 
+	 	TTree *inBeamTree;
 
 		double E_tar_loss;
 		double Range;
 		
 		double Vertex_X, Vertex_Y, Vertex_Z;		
 	
-		
+		TLorentzVector *in_lvBeam;
 		G4ParticleTable *particletable;
-		G4IonTable* iontable;
+		G4IonTable *iontable;
 		G4ParticleDefinition *def6He;
 		G4ParticleDefinition *def4He;
 		G4ParticleDefinition *def2H;
 		G4ParticleDefinition *defProt;
 		G4ParticleDefinition *defNeut;
 		G4ParticleDefinition *defAngel;
-		G4VUserPrimaryParticleInformation* partINFO;
+		G4VUserPrimaryParticleInformation *partINFO;
 		
 		//G4ThreeVector VertexPosition;
-		G4PrimaryVertex* elasticVertex;
-		G4PrimaryVertex* inelasticVertex;
-		G4EmCalculator* ELC;
+		G4PrimaryVertex *elasticVertex;
+		G4PrimaryVertex *inelasticVertex;
+		G4EmCalculator *ELC;
 		double 
-		get_E(double E, double r, G4Material* mat);
+		get_E(double E, double r, G4Material *mat);
 		double
-		get_R(double E, G4Material* mat);
+		get_R(double E, G4Material *mat);
 	};
 
 #endif

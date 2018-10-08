@@ -1,3 +1,5 @@
 # Formats excluded from aku repo
 build/
 GNUmakefile
+*.root
+G4History.macro

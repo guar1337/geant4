@@ -13,8 +13,8 @@
 int main(int argc,char** argv)
 {
 	//root output file
-	TFile * outFile=NULL;	
-	TTree * outTree=NULL;
+	TFile *outFile=NULL;	
+	TTree *outTree=NULL;
 	outFile = new TFile("gurney.root","recreate");
 	outTree=new TTree("simevents","MC events");
 

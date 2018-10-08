@@ -1,4 +1,6 @@
 #include "PrimaryGeneratorAction.hh"
+#include "TFile.h"
+
 
 #include "G4Event.hh"
 #include "G4LogicalVolumeStore.hh"
@@ -20,25 +22,28 @@
 	PrimaryGeneratorAction::PrimaryGeneratorAction()
 	: G4VUserPrimaryGeneratorAction()
 	{
+	TFile *inBeamF = new TFile{"/home/guar/data/mar2018/dE/geo1/dE_geor1.root","READ"};
+	inBeamF->IsOpen() ? printf("Otwarty\n") : printf("Zamkniety\n");
+	inBeamTree = (TTree*)inBeamF->Get("dE_angle");
+	in_lvBeam = new TLorentzVector();
 	// default particle kinematic
 	particletable = G4ParticleTable::GetParticleTable();
 	iontable = G4IonTable::GetIonTable();
 	defProt=particletable->FindParticle("proton");
 	defNeut=particletable->FindParticle("neutron");
-	def6He = iontable->GetIon(2,6);
-	def4He = iontable->GetIon(2,4);
-	def2H = iontable->GetIon(1,2);
+	defAngel=particletable->FindParticle("geantino");
 
 	ELC= new G4EmCalculator();
 	G4NistManager* man = G4NistManager::Instance();
 	man->SetVerbose(0);
 	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
 	
-	const float beam_spot_radius = 7.5*mm;
-	const float tar_thick = 20.0*um;
-	const float excitedStateEnergy_6He = 1797*keV;
+	beam_spot_radius=7.5*mm;
+	tar_thick=20*um;
+	excitedStateEnergy_6He=1797*keV;
 	}
-	
+
+		
 	PrimaryGeneratorAction::~PrimaryGeneratorAction()
 	{
 	}
@@ -46,7 +51,12 @@
 	void
 	PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	{
-
+	inBeamTree->SetMakeClass(0);
+	inBeamTree->SetBranchAddress("LV_beam.", &in_lvBeam);
+	inBeamTree->GetEntry(anEvent->GetEventID());
+	def6He = iontable->GetIon(2,6);
+	def4He = iontable->GetIon(2,4);
+	def2H = iontable->GetIon(1,2);
 
 	mass6He=def6He->GetPDGMass();
 	mass4He=def4He->GetPDGMass();
@@ -54,9 +64,11 @@
 	massNeut=defNeut->GetPDGMass();
 	massSum =mass6He + mass2H;	
 
-	G4double beam_T = 150*MeV;
-	G4double beam_mean_T = CLHEP::RandGauss::shoot(beam_T,beam_T*0.025/2.355);
-	beam_T=beam_mean_T;
+
+	G4double beam_T = 150.0*MeV;
+	printf("BeamT: %f\n", in_lvBeam->E()-in_lvBeam->M());
+	//G4double beam_mean_T = CLHEP::RandGauss::shoot(beam_T,beam_T*0.025/2.355);
+	//beam_T=beam_mean_T;
 	
 	//generate vertex position
 	G4double relative_Z_position;
