@@ -29,8 +29,8 @@ class EventAction : public G4UserEventAction
 	EventAction(TTree *T);
 	virtual ~EventAction();
 
-	virtual void	BeginOfEventAction(const G4Event* event);
-	virtual void	EndOfEventAction(const G4Event* event);
+	virtual void	BeginOfEventAction(const G4Event *event);
+	virtual void	EndOfEventAction(const G4Event *event);
 	
 	G4double CsIdeut[16];
 	G4double SideutX[16];
@@ -38,50 +38,20 @@ class EventAction : public G4UserEventAction
 	G4double CsIhe[16];
 	G4double SiheX[16];
 	G4double SiheY[16];
-	G4double thetaDeut;
-	G4double phiDeut;
-	G4double thetaHe;
-	G4double phiHe;
-	G4double x_helium;
-	G4double y_helium;
-	G4double x_deut;
-	G4double y_deut;
 
-	G4double Xpos;
-	G4double Ypos;
-	G4double Zpos;
+	G4double beamT;
 
-	G4double X6He;
-	G4double Y6He;
-	G4double Z6He;
+	G4double sqlang, sqlde, sqletot, sqlesum, sqltheta, sqlphi;
+	G4double sqrang, sqrde, sqretot, sqresum, sqrtheta, sqrphi, t_sqrang;
 
-	G4double X2H;
-	G4double Y2H;
-	G4double Z2H;
-	G4double mazz;
-	G4double stuck;
-	G4double Tdeut;
-	G4double exp1;
-	G4double The;
+	G4double Xpos, Ypos, Zpos;
+	G4double X6He, Y6He, Z6He;
+	G4double X2H, Y2H, Z2H;
+
+
 	G4double phiCM;
 	G4double thetaCM;
-	G4double phiBEAM;
-	G4double theBEAM;
-	G4double Tbeam;
-	G4double T_CMdeut;
-	G4double thetaCMdeut;
-	G4double phiCMdeut;
-	G4double BEAMenergy;
-	G4double deutEDEP;
-	G4double heEDEP;
-	G4double labAng2H;
-	G4double labAngHe;
-	G4double exp2;
-	G4double mass2H;
-	G4double mass6He;
-	G4double radThetaCM;
-	G4double reTheta2H;
-	G4double reTheta6He;
+
 
 	G4ParticleTable *particletable;
 	G4IonTable *iontable;
@@ -89,7 +59,6 @@ class EventAction : public G4UserEventAction
 	G4ParticleDefinition *def4He;
 	G4ParticleDefinition *def2H;
 
-	private:
 	TTree* tree;
 	G4int	fsiliconHCID;
 	G4int	fcesiumHCID;

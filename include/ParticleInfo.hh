@@ -19,18 +19,19 @@ inline G4LorentzVector Get_LV_Beam()
 {
 	return ParticleInfo_LV_Beam;
 }
-inline void Set_LV_2H_CM(G4LorentzVector lvBeam)
+
+inline void Set_LV_2H_CM(G4LorentzVector lv2H_CM)
 {
-	ParticleInfo_LV_Beam=lvBeam;
+	ParticleInfo_LV_2H_CM = lv2H_CM;
 }
 inline G4LorentzVector Get_LV_2H_CM()
 {
 	return ParticleInfo_LV_2H_CM;
 }
 
-inline void Set_LV_6He_CM(G4LorentzVector lvBeam)
+inline void Set_LV_6He_CM(G4LorentzVector lv6He_CM)
 {
-	ParticleInfo_LV_Beam=lvBeam;
+	ParticleInfo_LV_6He_CM=lv6He_CM;
 }
 inline G4LorentzVector Get_LV_6He_CM()
 {

@@ -7,7 +7,7 @@
 #include "G4PrimaryVertex.hh"
 #include "G4ThreeVector.hh"
 #include "/home/guar/root/build/include/TLorentzVector.h"
-
+#include "G4ExceptionSeverity.hh"
 #include "TTree.h"
 #include "DetectorConstruction.hh"
 
@@ -47,6 +47,8 @@ class G4Box;
 		double tar_thick;
 		double Ek6He;
 		double Ek2H;
+
+		G4double beam_T;
 		
 		G4ThreeVector MD2H;
 		G4ThreeVector MD6He;

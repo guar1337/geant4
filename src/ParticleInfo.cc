@@ -10,4 +10,5 @@ ParticleInfo::~ParticleInfo()
 {}
 
 void ParticleInfo::Print() const 
-{}
+{
+}

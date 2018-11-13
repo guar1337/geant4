@@ -35,8 +35,22 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 		virtual void ConstructSDandField();
 		void SetMaxStep (G4double);
 
-	 G4LogicalVolume* Si_pixel_log;
-	 G4LogicalVolume* CsI_crystal_log;
+		const G4float deut_angle	= 65.0*deg;
+		const G4float helium_angle	= 15.0*deg;
+		const G4float target_angle	= 45.0*deg;
+		const G4float tar_x = 50.0*mm, tar_y = 40.0*mm, tar_z = 100.0*um;	//Target half-dimensions
+
+		const G4float sql_dist=170.0*mm;
+		const G4float sqr_dist=250.0*mm;
+
+
+
+		const G4double world_sizeX = 120*cm;
+		const G4double world_sizeY = 7*cm;
+		const G4double world_sizeZ	= 120*cm;
+
+		G4LogicalVolume *log_pixelSi;
+	 	G4LogicalVolume *log_crystalCsI;
 };
 
 #endif

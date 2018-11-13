@@ -15,7 +15,7 @@ int main(int argc,char** argv)
 	//root output file
 	TFile *outFile=NULL;	
 	TTree *outTree=NULL;
-	outFile = new TFile("gurney.root","recreate");
+	outFile = new TFile("gurney.root","RECREATE");
 	outTree=new TTree("simevents","MC events");
 
 	// Detect interactive mode (if no arguments) and define UI session
