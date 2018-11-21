@@ -148,7 +148,7 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 	Ypos = event->GetPrimaryVertex(0)->GetY0()/mm;
 	Zpos = event->GetPrimaryVertex(0)->GetZ0()/1000/mm;
 
-	t_sqrang = -180.0*atan(-sin(2*lvBeam->Angle(*v2H))/(cos(2*lvBeam->Angle(*v2H))+6.01888589/2.01410177))/double(CLHEP::pi);
+	t_sqrang = 180.0*atan(sin(2*lvBeam->Angle(*v2H))/(-cos(2*lvBeam->Angle(*v2H))+6.01888589/2.01410177))/double(CLHEP::pi);
 
 }
 
