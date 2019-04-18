@@ -24,9 +24,15 @@
 	{
 	TFile *inBeamF = new TFile{"/home/guar/aku/geant4/build/beamSource.root","READ"};
 	if (!inBeamF->IsOpen()) G4Exception("PrimaryGeneratorAction::PrimaryGeneratorAction{}","beam sourceF not found", FatalException, ".");
-	inBeamTree = (TTree*)inBeamF->Get("beam_src");
+	inBeamTree = (TTree*)inBeamF->Get("beamSource");
 	inBeamTree->SetMakeClass(0);
 	inBeamTree->SetBranchAddress("lvBeam.", &in_lvBeam);
+	inBeamTree->SetBranchAddress("MWPC_1_X", &MWPC_1_X);
+	inBeamTree->SetBranchAddress("MWPC_2_X", &MWPC_2_X);
+	inBeamTree->SetBranchAddress("MWPC_1_Y", &MWPC_1_Y);
+	inBeamTree->SetBranchAddress("MWPC_2_Y", &MWPC_2_Y);
+	inBeamTree->SetBranchAddress("MWPC_1_Z", &MWPC_1_Z);
+	inBeamTree->SetBranchAddress("MWPC_2_Z", &MWPC_2_Z);
 	in_lvBeam = new TLorentzVector();
 	// default particle kinematic
 	particletable = G4ParticleTable::GetParticleTable();
@@ -38,11 +44,16 @@
 	ELC= new G4EmCalculator();
 	G4NistManager* man = G4NistManager::Instance();
 	man->SetVerbose(0);
-	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
+	//Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
+	//silicon_material = man->FindOrBuildMaterial("G4_Si");
 	
 	beam_spot_radius=7.5*mm;
 	tar_thick=20*um;
 	excitedStateEnergy_6He=1797*keV;
+	tar_angle = 35*deg;
+	tar_pos_Z = 0.0*mm;
+	MWPC_equivalent_of_Si = 660*um;
+
 	}
 
 		
@@ -69,18 +80,36 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4ThreeVector *vBeam = new G4ThreeVector{in_lvBeam->Px(), in_lvBeam->Py(), in_lvBeam->Pz()};
 	G4LorentzVector *lvBeam = new G4LorentzVector{*vBeam, beam_T + mass6He};
 	//generate vertex position
-	G4double relative_Z_position;
 	//beam is cut by annular DSSD - sizes are given in mm
-	Vertex_X = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
-	Vertex_Y = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
-	relative_Z_position = CLHEP::RandFlat::shoot(-1.4142*tar_thick, 1.4142*tar_thick);
-	Vertex_Z = relative_Z_position*um-Vertex_X*mm;
-	G4ThreeVector VertexPosition(Vertex_X,Vertex_Y,Vertex_Z);
+
+	MWPC_1_X += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
+	MWPC_1_Y += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
+	MWPC_1_Z = -816.0;
+	MWPC_2_X += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
+	MWPC_2_Y += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
+	MWPC_2_Z = -270.0;
+	
+	dX=MWPC_2_X-MWPC_1_X;
+	dY=MWPC_2_Y-MWPC_1_Y;
+	dZ=MWPC_2_Z-MWPC_1_Z;
+
+	Tcoef=(cos(tar_angle)*tar_pos_Z-sin(tar_angle)*MWPC_1_X - cos(tar_angle)*MWPC_1_Z)/(sin(tar_angle)*dX+cos(tar_angle)*dZ);
+	//XZsum= - sin(tar_angle)*MWPC_1_X - cos(tar_angle)*MWPC_1_Z;
+	
+	evX = MWPC_1_X + dX*Tcoef;
+	evY = MWPC_1_Y + dY*Tcoef;
+	evZ = MWPC_1_Z + dZ*Tcoef;
+
+
+	G4ThreeVector VertexPosition(evX,evY,evZ);
 
 	//Eloss estimation - CHECK
-	E_tar_loss = get_E(beam_T, (tar_thick/2)*um+Vertex_Z*um, Deut_target);	
+	/*
+	E_tar_loss = get_E(beam_T, MWPC_equivalent_of_Si, silicon_material);
 	beam_T= E_tar_loss;
-	
+	E_tar_loss = get_E(beam_T, (tar_thick/2)*um*(1/cos(tar_angle)), Deut_target);
+	beam_T= E_tar_loss;
+	*/
 	
 	G4LorentzVector lvTarget(0,0,0,mass2H);
 

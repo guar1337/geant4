@@ -1,3 +1,4 @@
+//file:///home/guar/aku/geant4/include/EventAction.hh
 #ifndef EventAction_h
 #define EventAction_h 1
 
@@ -31,6 +32,9 @@ class EventAction : public G4UserEventAction
 
 	virtual void	BeginOfEventAction(const G4Event *event);
 	virtual void	EndOfEventAction(const G4Event *event);
+
+	G4bool fEve2H;
+	G4bool fEve6He;
 	
 	G4double CsIdeut[16];
 	G4double SideutX[16];
@@ -41,10 +45,17 @@ class EventAction : public G4UserEventAction
 
 	G4double beamT;
 
-	G4double sqlang, sqlde, sqletot, sqlesum, sqltheta, sqlphi;
-	G4double sqrang, sqrde, sqretot, sqresum, sqrtheta, sqrphi, t_sqrang;
+	G4double sqlang, sqlde, sqletot, sqlesum, sqltheta, sqlphi, fsqlang;
+	G4double sqrang, sqrde, sqretot, sqresum, sqrtheta, sqrphi, fsqrang;
 
-	G4double Xpos, Ypos, Zpos;
+	G4int SipixelNo;
+	G4int SistripNo;
+	G4int SidetectorNo;
+	G4int CsIpixelNo;
+	G4int CsIstripNo;
+	G4int CsIdetectorNo;
+
+	G4double evx, evy, evz;
 	G4double X6He, Y6He, Z6He;
 	G4double X2H, Y2H, Z2H;
 

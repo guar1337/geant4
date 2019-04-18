@@ -53,14 +53,21 @@ class G4Box;
 		G4ThreeVector MD2H;
 		G4ThreeVector MD6He;
 		G4Material *Deut_target;
+		G4Material *silicon_material;
 	private:
 		bool target_losses;
 	 	TTree *inBeamTree;
 
 		double E_tar_loss;
+		G4double tar_angle, tar_pos_Z;
+		G4double MWPC_equivalent_of_Si;
 		double Range;
 		
-		double Vertex_X, Vertex_Y, Vertex_Z;		
+		G4float MWPC_1_X, MWPC_1_Y, MWPC_1_Z;
+		G4float MWPC_2_X, MWPC_2_Y, MWPC_2_Z;
+		G4double evX, evY, evZ;
+		G4double dX, dY, dZ;
+		G4double Tcoef;
 	
 		TLorentzVector *in_lvBeam;
 		G4ParticleTable *particletable;
@@ -72,6 +79,7 @@ class G4Box;
 		G4ParticleDefinition *defNeut;
 		G4ParticleDefinition *defAngel;
 		G4VUserPrimaryParticleInformation *partINFO;
+
 		
 		//G4ThreeVector VertexPosition;
 		G4PrimaryVertex *elasticVertex;

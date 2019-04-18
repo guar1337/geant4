@@ -3,3 +3,4 @@ build/
 GNUmakefile
 *.root
 G4History.macro
+.vscode/ipch

@@ -1,3 +1,4 @@
+//file:///home/guar/aku/geant4/src/EventAction.cc
 #include "EventAction.hh"
 #include "g4root.hh"
 #include "Randomize.hh"
@@ -44,11 +45,11 @@ EventAction::EventAction(TTree *T):
 	tree->Bronch("lv6He_CM.",	"TLorentzVector", 	&lv6He_CM);
 	
 	//Deuterium part 
-	tree->Branch("sqlesum",		&sqlesum,	"sqlesum/D");
 	tree->Branch("CsIdeut", 	CsIdeut, 	"CsIdeut[16]/D");
 	tree->Branch("SideutX", 	SideutX, 	"SideutX[16]/D");
 	tree->Branch("SideutY",		SideutY, 	"SideutY[16]/D");
 	tree->Branch("sqlang",		&sqlang, 	"sqlang/D");
+	tree->Branch("fsqlang",		&fsqlang, 	"fsqlang/D");
 	tree->Branch("sqlde",		&sqlde,		"sqlde/D");
 	tree->Branch("sqletot",		&sqletot,	"sqletot/D");
 	tree->Branch("sqlphi",		&sqlphi,		"sqlphi/D");
@@ -57,7 +58,6 @@ EventAction::EventAction(TTree *T):
 
 	//Helium part
 
-	tree->Branch("sqresum",		&sqresum,	"sqresum/D");
 	tree->Branch("CsIhe",		CsIhe,		"CsIhe[16]/D");
 	tree->Branch("SiheY",		SiheY,		"SiheY[16]/D");
 	tree->Branch("SiheX",		SiheX,		"SiheX[16]/D");
@@ -66,23 +66,26 @@ EventAction::EventAction(TTree *T):
 	tree->Branch("sqretot",		&sqretot,	"sqretot/D");
 	tree->Branch("sqrphi",		&sqrphi,		"sqrphi/D");
 	tree->Branch("sqrtheta",	&sqrtheta,	"sqrtheta/D");
-	tree->Branch("t_sqrang",		&t_sqrang, 	"t_sqrang/D");
+	tree->Branch("fsqrang",		&fsqrang, 	"fsqrang/D");
 
 	//BEAM
-	tree->Branch("beamT",&beamT,"TbebeamTam/D");
-	tree->Branch("thetaCM",&thetaCM,"thetaCM/D");
-	tree->Branch("phiCM",&phiCM,"phiCM/D");
-	tree->Branch("Xpos",&Xpos,"Xpos/D");
-	tree->Branch("Ypos",&Ypos,"Ypos/D");
-	tree->Branch("Zpos",&Zpos,"Zpos/D");
+	tree->Branch("beamT",	&beamT,"beamT/D");
+	tree->Branch("thetaCM",	&thetaCM,"thetaCM/D");
+	tree->Branch("phiCM",	&phiCM,"phiCM/D");
+	tree->Branch("evx",		&evx,	"evx/D");
+	tree->Branch("evy",		&evy,	"evy/D");
+	tree->Branch("evz",		&evz,	"evz/D");
 
-	tree->Branch("X6He",&X6He,"X6He/D");
-	tree->Branch("Y6He",&Y6He,"Y6He/D");
-	tree->Branch("Z6He",&Z6He,"Z6He/D");
+	tree->Branch("X6He",		&X6He,"X6He/D");
+	tree->Branch("Y6He",		&Y6He,"Y6He/D");
+	tree->Branch("Z6He",		&Z6He,"Z6He/D");
 
-	tree->Branch("X2H",&X2H,"X2H/D");
-	tree->Branch("Y2H",&Y2H,"Y2H/D");
-	tree->Branch("Z2H",&Z2H,"Z2H/D");
+	tree->Branch("X2H",		&X2H,"X2H/D");
+	tree->Branch("Y2H",		&Y2H,"Y2H/D");
+	tree->Branch("Z2H",		&Z2H,"Z2H/D");
+
+	tree->Branch("fEve2H",		&fEve2H,"fEve2H/B");
+	tree->Branch("fEve6He",		&fEve6He,"fEve6He/B");
 }
 
 EventAction::~EventAction()
@@ -144,11 +147,9 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 
 	//double E_IN_CM_deut = IN_CM_deut.e();
 
-	Xpos = event->GetPrimaryVertex(0)->GetX0()/mm;
-	Ypos = event->GetPrimaryVertex(0)->GetY0()/mm;
-	Zpos = event->GetPrimaryVertex(0)->GetZ0()/1000/mm;
-
-	t_sqrang = 180.0*atan(sin(2*lvBeam->Angle(*v2H))/(-cos(2*lvBeam->Angle(*v2H))+6.01888589/2.01410177))/double(CLHEP::pi);
+	evx = event->GetPrimaryVertex(0)->GetX0()/mm;
+	evy = event->GetPrimaryVertex(0)->GetY0()/mm;
+	evz = event->GetPrimaryVertex(0)->GetZ0()/mm;
 
 }
 
@@ -172,7 +173,7 @@ if (!HCofThisEvent)
 	G4Exception("no cos nie poszlo",
 	"ej,", JustWarning, msg1);
 	return;
-	}	//ending scope on if on HCofThisEvent
+}
 
 siliconHitsCollection *SiHC = nullptr;
 cesiumHitsCollection *CsIHC = nullptr;
@@ -182,20 +183,35 @@ CsIHC = static_cast<cesiumHitsCollection*>(HCofThisEvent->GetHC(fcesiumHCID));
 if (fsiliconHCID<0 || fcesiumHCID<0) 
 {
 	G4ExceptionDescription msg2;
-	msg2 << "Bida czesciowa" << G4endl; 
+	msg2 << "Nie ma Hit collection w EventAction" << G4endl; 
 	G4Exception("no cos nie poszlo",
 	"ej,", JustWarning, msg2);
 	return;
-}//ending scope on if on SiHC && CsIHC
+}
 
-G4int SipixelNo=0;
-G4int SistripNo=0;
-G4int SidetectorNo=0;
-G4int CsIpixelNo=0;
-G4int CsIstripNo=0;
-G4int CsIdetectorNo=0;
+SipixelNo=0;
+SistripNo=0;
+SidetectorNo=0;
+CsIpixelNo=0;
+CsIstripNo=0;
+CsIdetectorNo=0;
+sqrde=0;
+sqlde=0;
+sqretot=0;
+sqletot=0;
 
+	//zeroing Silicon detectors
+std::fill(SideutX,SideutX+16,0.0);
+std::fill(SideutY,SideutY+16,0.0);
+std::fill(SiheX,SiheX+16,0.0);
+std::fill(SiheY,SiheY+16,0.0);
+//zeroing CesiumIodide detectors
 
+std::fill(CsIdeut,CsIdeut+16,0.0);
+std::fill(CsIhe,CsIhe+16,0.0);
+
+fEve2H = false;
+fEve6He = false;
 
 auto Si_n_hit = SiHC->entries();
 if (Si_n_hit>0)
@@ -209,54 +225,66 @@ if (Si_n_hit>0)
 		G4ThreeVector positionAccu = ((*SiHC)[iii])->GetPos();
 
 		if (SidetectorNo == 1)
-		{	
+		{
+			if (fEve2H == false)
+			{
+				X2H = ((*SiHC)[iii])->GetPos().x();
+				Y2H = ((*SiHC)[iii])->GetPos().y();
+				Z2H = ((*SiHC)[iii])->GetPos().z();
+				fEve2H = true;
+			} 
+			
 			SiheX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
-			SiheY[SistripNo]+=((*SiHC)[iii])->GetEnergy();			
+			SiheY[SistripNo]+=((*SiHC)[iii])->GetEnergy();
+			sqrde+=((*SiHC)[iii])->GetEnergy();
 		}
 			
 		else if(SidetectorNo == 0)
 		{
+			if (fEve6He == false)
+			{
+				X2H = ((*SiHC)[iii])->GetPos().x();
+				Y2H = ((*SiHC)[iii])->GetPos().y();
+				Z2H = ((*SiHC)[iii])->GetPos().z();
+				fEve6He = true;
+			} 
+
 			SideutX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
 			SideutY[SistripNo]+=((*SiHC)[iii])->GetEnergy();
+			sqlde+=((*SiHC)[iii])->GetEnergy();
 		}
 	}	
 }
 
 auto CsI_n_hit = CsIHC->entries();
 if (CsI_n_hit>0)
-	{
+{
 	for ( int iii = 0; iii < CsI_n_hit; iii++)
 	{
 		CsIdetectorNo= 	((*CsIHC)[iii])->GetDetectorNo();
 		CsIpixelNo= 	((*CsIHC)[iii])->GetPixelNo();
 		CsIstripNo= 	((*CsIHC)[iii])->GetStripNo();
+		//printf("DetNo: %d\tEdep: %f\thitNo: %d\n", CsIdetectorNo,((*CsIHC)[iii])->GetEnergy(), iii);
 
-		if(CsIdetectorNo == 1)
-		{
-			CsIhe[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
-		}
-		else if(CsIdetectorNo == 0)
+		if(CsIdetectorNo == 0)
 		{
 			CsIdeut[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
+			sqletot+=((*CsIHC)[iii])->GetEnergy();
+			//printf("Energia w de:\t%f\tentries: %d\n", CsIhe[CsIpixelNo+4*CsIstripNo], CsI_n_hit);
+		}
+
+		else if(CsIdetectorNo == 1)
+		{
+			CsIhe[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
+			sqretot+=((*CsIHC)[iii])->GetEnergy();
+			
+			//if (CsIhe[CsIpixelNo+4*CsIstripNo]<0.1) printf("Energia w he:\t%f\n", CsIhe[CsIpixelNo+4*CsIstripNo]);
 		}
 	}
 }
-if(Si_n_hit>0)
-	{
+
+
 	tree->Fill();
-	}
-	//zeroing Silicon detectors
-SipixelNo=0;
-SistripNo=0;
-SidetectorNo=0;
-std::fill(SideutX,SideutX+16,0);
-std::fill(SideutY,SideutY+16,0);
-std::fill(SiheX,SiheX+16,0);
-std::fill(SiheY,SiheY+16,0);
-//zeroing CesiumIodide detectors
-CsIpixelNo=0;
-CsIstripNo=0;
-CsIdetectorNo=0;
-std::fill(CsIdeut,CsIdeut+16,0.0);
-std::fill(CsIhe,CsIhe+16,0.0);
+
+
 }
