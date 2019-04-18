@@ -9,11 +9,6 @@
 #include <iomanip>
 G4Allocator<siliconHit> siliconHitAllocator;
 
-<<<<<<< HEAD
-=======
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 siliconHit::siliconHit()
  : G4VHit(),
    pixelNo(-1),
@@ -26,19 +21,9 @@ siliconHit::siliconHit()
    particle()
 {}
 
-<<<<<<< HEAD
 siliconHit::~siliconHit()
 {}
 
-=======
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-siliconHit::~siliconHit()
-{}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 siliconHit::siliconHit(const siliconHit & right)
 : G4VHit()
 {
@@ -53,12 +38,6 @@ particle       = right.particle;
 position       = right.position;
 }
 
-<<<<<<< HEAD
-=======
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 const siliconHit& siliconHit::operator=(const siliconHit& right)
 {
 pixelNo        = right.pixelNo;
@@ -73,35 +52,15 @@ position       = right.position;
   return *this;
 }
 
-<<<<<<< HEAD
-=======
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 G4int siliconHit::operator==(const siliconHit &right) const
 {
   return ( this == &right ) ? 1 : 0;
 }
 
-<<<<<<< HEAD
-=======
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 void siliconHit::Draw()
 {
 }
 
-<<<<<<< HEAD
 void siliconHit::Print()
 {
 }
-=======
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void siliconHit::Print()
-{
-}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217

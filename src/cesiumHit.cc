@@ -27,19 +27,9 @@ cesiumHit::cesiumHit()
 	particle()
 {}
 
-<<<<<<< HEAD
 cesiumHit::~cesiumHit()
 {}
 
-=======
-
-
-cesiumHit::~cesiumHit()
-{}
-
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 cesiumHit::cesiumHit(const cesiumHit &right)
 : G4VHit()
 {
@@ -53,12 +43,6 @@ energy	= right.energy;
 particle	= right.particle;
 }
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 const cesiumHit& cesiumHit::operator=(const cesiumHit &right)
 {
 pixelNo	= right.pixelNo;
@@ -69,27 +53,14 @@ position	= right.position;
 momentum	= right.momentum;
 energy		= right.energy;
 particle	= right.particle;
-<<<<<<< HEAD
 return *this;
 }
 
-=======
-	return *this;
-}
-
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 G4int cesiumHit::operator==(const cesiumHit &right) const
 {
 	return ( this == &right ) ? 1 : 0;
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 void cesiumHit::Draw()
 {
 	//G4VVisManager* pVVisManager = G4VVisManager::GetConcreteInstance();
@@ -107,11 +78,6 @@ void cesiumHit::Draw()
 	}
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 void cesiumHit::Print()
 {
 G4cout<<pixelNo<<G4endl;
@@ -122,10 +88,4 @@ G4cout<<pixelNo<<G4endl;
 	<< " Position: "
 	<< std::setw(7) << G4BestUnit( fPos,"Length")
 	<< G4endl;*/
-<<<<<<< HEAD
 }
-=======
-}
-
-
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217

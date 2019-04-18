@@ -35,7 +35,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 		virtual void ConstructSDandField();
 		void SetMaxStep (G4double);
 
-<<<<<<< HEAD
 		const G4float deut_angle	= 65.0*deg;
 		const G4float helium_angle	= 15.0*deg;
 		const G4float target_angle	= 45.0*deg;
@@ -52,10 +51,6 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
 		G4LogicalVolume *log_pixelSi;
 	 	G4LogicalVolume *log_crystalCsI;
-=======
-	 G4LogicalVolume* Si_pixel_log;
-	 G4LogicalVolume* CsI_crystal_log;
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 };
 
 #endif

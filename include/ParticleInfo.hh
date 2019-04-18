@@ -11,7 +11,6 @@ ParticleInfo();
 virtual ~ParticleInfo();
 virtual void Print() const;
 //Set methods	
-<<<<<<< HEAD
 inline void Set_LV_Beam(G4LorentzVector lvBeam)
 {
 	ParticleInfo_LV_Beam=lvBeam;
@@ -42,21 +41,11 @@ inline G4LorentzVector Get_LV_6He_CM()
 inline void Set_LV_Beam(G4LorentzVector lvBeam);
 inline void Set_LV_2H_CM(G4LorentzVector lv2H_CM);
 inline void Set_LV_6He_CM(G4LorentzVector lv6He_CM);
-=======
-
-inline void Set_LV_Beam(G4LorentzVector lv_Beam);
-inline void Set_LV_2H_CM(G4LorentzVector lv2H_CM);
-inline void Set_LV_6He_CM(G4LorentzVector lv_6He_CM);
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 
 inline G4LorentzVector Get_LV_Beam();
 inline G4LorentzVector Get_LV_2H_CM();
 inline G4LorentzVector Get_LV_6He_CM();
-<<<<<<< HEAD
 */
-=======
-	
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 private:
 G4LorentzVector ParticleInfo_LV_Beam;
 G4LorentzVector ParticleInfo_LV_2H_CM;

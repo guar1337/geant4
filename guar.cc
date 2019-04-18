@@ -13,15 +13,9 @@
 int main(int argc,char** argv)
 {
 	//root output file
-<<<<<<< HEAD
 	TFile *outFile=NULL;	
 	TTree *outTree=NULL;
 	outFile = new TFile("gurney.root","RECREATE");
-=======
-	TFile * outFile=NULL;	
-	TTree * outTree=NULL;
-	outFile = new TFile("gurney.root","recreate");
->>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 	outTree=new TTree("simevents","MC events");
 
 	// Detect interactive mode (if no arguments) and define UI session
