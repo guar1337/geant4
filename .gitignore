@@ -1,6 +1,9 @@
 # Formats excluded from aku repo
 build/
 GNUmakefile
+<<<<<<< HEAD
 *.root
 G4History.macro
 .vscode/
+=======
+>>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217

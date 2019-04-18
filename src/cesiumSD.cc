@@ -17,9 +17,19 @@ cesiumSD::cesiumSD(const G4String& name)	 //det name
 	collectionName.insert("cesiumColl");	 //creating hit collection
 }
 
+<<<<<<< HEAD
 cesiumSD::~cesiumSD() 
 {}
 
+=======
+
+
+cesiumSD::~cesiumSD() 
+{}
+
+
+
+>>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 void cesiumSD::Initialize(G4HCofThisEvent* HCofEven)
 {
   // Create hits collection
@@ -32,6 +42,11 @@ if (fHCID<0)
 HCofEven->AddHitsCollection(fHCID, fHitsCollection); 
 }
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> a51287d9dc94593d291b50567b67b4de15ec5217
 G4bool cesiumSD::ProcessHits(G4Step* step, G4TouchableHistory*)
 
 {  
