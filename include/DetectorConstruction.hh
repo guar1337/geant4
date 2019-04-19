@@ -46,7 +46,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
 
 		const G4double world_sizeX = 120*cm;
-		const G4double world_sizeY = 7*cm;
+		const G4double world_sizeY = 8*cm;
 		const G4double world_sizeZ	= 120*cm;
 
 		G4LogicalVolume *log_pixelSi;

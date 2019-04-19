@@ -88,7 +88,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 												boxTelescope_z);
 
 	// silicon strip box 
-	const G4double Si_strip_x =	32*mm, Si_strip_y = 2*mm, Si_strip_z = 0.5*mm;
+	const G4double Si_strip_x =	29*mm, Si_strip_y = 1.8125*mm, Si_strip_z = 0.5*mm;
 	G4Box *box_stripSi = new G4Box(	"Si strip",		//name
 												Si_strip_x,		//X
 												Si_strip_y,		//Y
@@ -104,7 +104,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
 
 	//pixel of Si box
-	const G4double pixelSi_x = 2*mm, pixelSi_y = 2*mm, pixelSi_z = 0.5*mm;
+	const G4double pixelSi_x = 1.8125*mm, pixelSi_y = 3.625*mm, pixelSi_z = 0.5*mm;
 	G4Box* box_pixelSi = new G4Box(	"pixeSi",		//name
 												pixelSi_x,			//X
 												pixelSi_y,			//Y
@@ -164,14 +164,14 @@ log_rowCsI->SetVisAttributes(G4VisAttributes::GetInvisible());
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 //Deuterium telescope container positioning
-G4ThreeVector vPosition_2H_telescope = G4ThreeVector(	sin(deut_angle)*(35+sql_dist)*mm,
+G4ThreeVector vPosition_2H_telescope = G4ThreeVector(	sin(deut_angle)*(boxTelescope_x+sql_dist)*mm,
 																		0,
-																		cos(deut_angle)*(35+sql_dist)*mm);
+																		cos(deut_angle)*(boxTelescope_x+sql_dist)*mm);
 
 //Helium telescope container positioning
-G4ThreeVector vPosition_6He_telescope = G4ThreeVector(	-sin(helium_angle)*(35+sqr_dist)*mm,
+G4ThreeVector vPosition_6He_telescope = G4ThreeVector(	-sin(helium_angle)*(boxTelescope_x+sqr_dist)*mm,
 																			0,
-																			cos(helium_angle)*(35+sqr_dist)*mm);
+																			cos(helium_angle)*(boxTelescope_x+sqr_dist)*mm);
 
 
 //Deuterium telescope container rotation
@@ -219,7 +219,7 @@ he_tele_rot_mtrx->rotateZ(0.0);
 for (int iii=0; iii<16; iii++)
 {
 	new G4PVPlacement(	0,														//rotation mtrx
-								G4ThreeVector(0,(30-iii*4)*mm, -34.5*mm),	//at (0,0,0)
+								G4ThreeVector(0,(-27.1875+iii*3.625)*mm, -34.5*mm),	//at (0,0,0)
 								log_stripSi,										//its logical volume
 								"Si strip",											//its name
 								logTelescope,										//its mother	volume
@@ -246,10 +246,10 @@ for (int iii=0; iii<4; iii++)
 	// Pixels/crystals placement
 
 	// Pixels placement
-for (int iii=0; iii<16; iii++)
+for (int iii=0; iii<32; iii++)
 {
 	new G4PVPlacement(	0,												//rotation mtrx
-								G4ThreeVector((30-iii*4)*mm,0,0),	//at (0,0,0)
+								G4ThreeVector((28.09375-iii*1.8125)*mm,0,0),	//at (0,0,0)
 								log_pixelSi,								//its logical volume
 								"Si pixel",									//its name
 								log_stripSi,					 			//its mother	volume

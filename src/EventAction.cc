@@ -140,8 +140,8 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 	tmp_lv6He_CM = new G4LorentzVector(particleInfo->Get_LV_6He_CM());
 	lv6He_CM->SetPxPyPzE(tmp_lv6He_CM->px(), tmp_lv6He_CM->py(), tmp_lv6He_CM->pz(), tmp_lv6He_CM->e());
 
-	sqlang = 180.0 * (lvBeam->Angle(*v2H))/double(CLHEP::pi);
-	sqrang = 180.0 * (lvBeam->Angle(*v6He))/double(CLHEP::pi);
+	fsqlang = 180.0 * (lvBeam->Angle(*v2H))/double(CLHEP::pi);
+	fsqrang = 180.0 * (lvBeam->Angle(*v6He))/double(CLHEP::pi);
 
 	beamT =lvBeam->E()-lvBeam->M();
 

@@ -44,8 +44,8 @@
 	ELC= new G4EmCalculator();
 	G4NistManager* man = G4NistManager::Instance();
 	man->SetVerbose(0);
-	//Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
-	//silicon_material = man->FindOrBuildMaterial("G4_Si");
+	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
+	silicon_material = man->FindOrBuildMaterial("G4_Si");
 	
 	beam_spot_radius=7.5*mm;
 	tar_thick=20*um;
@@ -94,8 +94,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	dZ=MWPC_2_Z-MWPC_1_Z;
 
 	Tcoef=(cos(tar_angle)*tar_pos_Z-sin(tar_angle)*MWPC_1_X - cos(tar_angle)*MWPC_1_Z)/(sin(tar_angle)*dX+cos(tar_angle)*dZ);
-	//XZsum= - sin(tar_angle)*MWPC_1_X - cos(tar_angle)*MWPC_1_Z;
-	
+
 	evX = MWPC_1_X + dX*Tcoef;
 	evY = MWPC_1_Y + dY*Tcoef;
 	evZ = MWPC_1_Z + dZ*Tcoef;
@@ -104,12 +103,12 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4ThreeVector VertexPosition(evX,evY,evZ);
 
 	//Eloss estimation - CHECK
-	/*
+
 	E_tar_loss = get_E(beam_T, MWPC_equivalent_of_Si, silicon_material);
 	beam_T= E_tar_loss;
 	E_tar_loss = get_E(beam_T, (tar_thick/2)*um*(1/cos(tar_angle)), Deut_target);
 	beam_T= E_tar_loss;
-	*/
+
 	
 	G4LorentzVector lvTarget(0,0,0,mass2H);
 
@@ -127,11 +126,11 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	lv6He_EL.boost(-boostVect_EL);
 	lv2H_EL.boost(-boostVect_EL);
 	//CM PART
-	double theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
+	double theta_CM = CLHEP::RandFlat::shoot(0.0/*100*CLHEP::pi/180.0*/,CLHEP::pi);
 	double phi_CM = CLHEP::RandFlat::shoot(0.0,2*double(CLHEP::pi));
 
-	lv6He_EL.setRThetaPhi(lv6He_EL.rho(), theta_CM, phi_CM);
-	lv2H_EL.setRThetaPhi(lv2H_EL.rho(), -theta_CM, -phi_CM);
+	lv6He_EL.setTheta(CLHEP::pi-theta_CM);
+	lv2H_EL.setTheta(theta_CM);
 	
 	G4LorentzVector lv2H_CM_EL(lv2H_EL);
 	G4LorentzVector lv6He_CM_EL(lv6He_EL);
