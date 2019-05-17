@@ -7,7 +7,12 @@
 #include "G4VisAttributes.hh"
 #include "G4VSensitiveDetector.hh"
 #include "G4SDManager.hh"
-#include "G4String.hh"
+#include <G4String.hh>
+#include <G4Tubs.hh>
+#include <G4SubtractionSolid.hh>
+#include <G4Cons.hh>
+#include <G4Sphere.hh>
+#include <G4UnionSolid.hh>
 
 #include "siliconSD.hh"
 #include "siliconHit.hh"
@@ -42,6 +47,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
 		const G4float sql_dist=170.0*mm;
 		const G4float sqr_dist=250.0*mm;
+		const bool gasTarget = true;
 
 
 
