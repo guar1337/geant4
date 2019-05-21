@@ -20,6 +20,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4Material *matCD2 = nist->FindOrBuildMaterial("G4_POLYETHYLENE");
 	G4Material *matSS = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
 	G4Material *matMylar = nist->FindOrBuildMaterial("G4_MYLAR");
+	/*(const G4String &name, G4double z, G4double a, G4double density, G4State state=kStateUndefined, G4double temp, G4double pressure)*/
+	G4Material *gasDeut = new G4Material ("gasDeut", 1, 2, 0.800507*(gram/mm3), kStateGas, 30*kelvin, 0.5*bar);
+
 
 	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	//xxxxxxxx	DETECTORS PARAMETERS	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -112,6 +115,7 @@ else
 
 	G4VSolid *gasCellSolid = new G4UnionSolid("deutCapS+deutDiscTube", tempDeuterUnion, deutCap, deutCapRot, secondCapShiftVect);
 	//There is deuterium gas solid (disc + 2 "caps")
+	printf("\n\nGas volume:\t%f\n\n", gasCellSolid->GetCubicVolume());
 
 	G4Tubs *tarFlangeTube = new G4Tubs("tarFlangeTube", 	12.5*mm, 26*mm,			//inner & outer radius
 																			3.5*mm,						//halflength
@@ -183,7 +187,7 @@ else
 																		"mylarFoilLog");	//its name
 
 	G4LogicalVolume *gasCellLog = new G4LogicalVolume(	gasCellSolid,	//its solid
-																	matCD2,		//its material - I can take poly
+																	gasDeut,		//its material - I can take poly
 																	"gasCellLog");	//its name
 
 	G4LogicalVolume *tarFlangeLog = new G4LogicalVolume(tarFlangeSolid,	//its solid
@@ -287,7 +291,7 @@ else
 
 
 	//pixel of Si box
-	const G4double pixelSi_x = 1.8125*mm, pixelSi_y = 3.625*mm, pixelSi_z = 0.5*mm;
+	const G4double pixelSi_x = 0.5*1.8125*mm, pixelSi_y = 0.5*3.625*mm, pixelSi_z = 0.5*mm;
 	G4Box* box_pixelSi = new G4Box(	"pixeSi",		//name
 												pixelSi_x,			//X
 												pixelSi_y,			//Y
@@ -379,7 +383,7 @@ he_tele_rot_mtrx->rotateZ(0.0);
 	new G4PVPlacement(	deut_tele_rot_mtrx,			//rotation mtrx
 								vPosition_2H_telescope,		//vector of center of the detector
 								logTelescope,					//its logical volume
-								"helium telescope",			//its name
+								"Deuterium telescope",			//its name
 								log_wrld,						//its mother	volume
 								false,							//no boolean operation
 								0,									//copy number - for deuterium
@@ -390,7 +394,7 @@ he_tele_rot_mtrx->rotateZ(0.0);
 	new G4PVPlacement(	he_tele_rot_mtrx,				//rotation mtrx
 								vPosition_6He_telescope,	//vector of center of the detector
 								logTelescope,					//its logical volume
-								"deuterium telescope",		//its name
+								"helium telescope",		//its name
 								log_wrld,						//its mother	volume
 								false,							//no boolean operation
 								1,									//copy number - for helium

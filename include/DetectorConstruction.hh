@@ -47,7 +47,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
 		const G4float sql_dist=170.0*mm;
 		const G4float sqr_dist=250.0*mm;
-		const bool gasTarget = true;
+		const bool gasTarget = false;
 
 
 

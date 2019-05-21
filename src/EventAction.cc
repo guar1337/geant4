@@ -226,12 +226,12 @@ if (Si_n_hit>0)
 
 		if (SidetectorNo == 1)
 		{
-			if (fEve2H == false)
+			if (fEve6He == false)
 			{
-				X2H = ((*SiHC)[iii])->GetPos().x();
-				Y2H = ((*SiHC)[iii])->GetPos().y();
-				Z2H = ((*SiHC)[iii])->GetPos().z();
-				fEve2H = true;
+				X6He = ((*SiHC)[iii])->GetPos().x();
+				Y6He = ((*SiHC)[iii])->GetPos().y();
+				Z6He = ((*SiHC)[iii])->GetPos().z();
+				fEve6He = true;
 			} 
 			
 			SiheX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
@@ -239,14 +239,14 @@ if (Si_n_hit>0)
 			sqrde+=((*SiHC)[iii])->GetEnergy();
 		}
 			
-		else if(SidetectorNo == 0)
+		else if (SidetectorNo == 0)
 		{
-			if (fEve6He == false)
+			if (fEve2H == false)
 			{
 				X2H = ((*SiHC)[iii])->GetPos().x();
 				Y2H = ((*SiHC)[iii])->GetPos().y();
 				Z2H = ((*SiHC)[iii])->GetPos().z();
-				fEve6He = true;
+				fEve2H = true;
 			} 
 
 			SideutX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
