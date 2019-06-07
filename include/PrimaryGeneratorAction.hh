@@ -11,11 +11,15 @@
 #include "TTree.h"
 #include "DetectorConstruction.hh"
 
-#include "G4ParticleTable.hh"
-#include "G4IonTable.hh"
-#include "G4EmCalculator.hh"
-#include "G4NistManager.hh"
-#include "G4Material.hh"
+#include <G4ParticleTable.hh>
+#include <G4IonTable.hh>
+#include <G4EmCalculator.hh>
+#include <G4NistManager.hh>
+#include <G4Material.hh>
+#include <G4Tubs.hh>
+#include <G4Sphere.hh>
+#include <G4Orb.hh>
+#include <geomdefs.hh>
 
 class G4Event;
 class G4Box;
@@ -33,6 +37,29 @@ class G4Box;
 		inline bool
 		is_target_losses(){return target_losses;}
  
+
+
+	private:
+		bool target_losses;
+	 	TTree *inBeamTree;
+		G4VSolid *gasCellSolid;
+		G4Tubs *deutDiscTube;
+		G4Sphere *deutSphere;
+		G4Box *sphereCutoff;
+		G4VSolid *deutCap;
+		G4VSolid *tempDeuterUnion;
+		G4double minZ, maxZ;
+
+		double E_tar_loss;
+		G4double tar_angle, tar_pos_Z;
+		G4double MWPC_equivalent_of_Si;
+		double Range;
+		
+		G4float MWPC_1_X, MWPC_1_Y, MWPC_1_Z;
+		G4float MWPC_2_X, MWPC_2_Y, MWPC_2_Z;
+		G4double evX, evY, evZ;
+		G4double dX, dY, dZ;
+		G4double Tcoef;
 
 		double mass6He;
 		double mass4He;
@@ -53,22 +80,12 @@ class G4Box;
 		G4ThreeVector MD2H;
 		G4ThreeVector MD6He;
 		G4Material *Deut_target;
-		G4Material *silicon_material;
-	private:
-		bool target_losses;
-	 	TTree *inBeamTree;
-
-		double E_tar_loss;
-		G4double tar_angle, tar_pos_Z;
-		G4double MWPC_equivalent_of_Si;
-		double Range;
+		G4ThreeVector zAxis;
+		G4double maxDist;
+		G4double minDist;
 		
-		G4float MWPC_1_X, MWPC_1_Y, MWPC_1_Z;
-		G4float MWPC_2_X, MWPC_2_Y, MWPC_2_Z;
-		G4double evX, evY, evZ;
-		G4double dX, dY, dZ;
-		G4double Tcoef;
 	
+		G4Material *silicon_material;
 		TLorentzVector *in_lvBeam;
 		G4ParticleTable *particletable;
 		G4IonTable *iontable;

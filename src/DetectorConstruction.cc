@@ -3,6 +3,7 @@
 DetectorConstruction::DetectorConstruction()
 : G4VUserDetectorConstruction()
 {
+
 }
 
 DetectorConstruction::~DetectorConstruction()
@@ -10,7 +11,7 @@ DetectorConstruction::~DetectorConstruction()
 }
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
-{	
+{
 	G4bool checkOverlaps = true;
 	// Get nist material manager
 	G4NistManager *nist = G4NistManager::Instance();
@@ -20,8 +21,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	G4Material *matCD2 = nist->FindOrBuildMaterial("G4_POLYETHYLENE");
 	G4Material *matSS = nist->FindOrBuildMaterial("G4_STAINLESS-STEEL");
 	G4Material *matMylar = nist->FindOrBuildMaterial("G4_MYLAR");
+	//G4Material *gasDeut = new G4Material ("gasDeut", 1, 2, 0.800507*(gram/mm3), kStateGas, 30*kelvin, 0.5*bar);
 	/*(const G4String &name, G4double z, G4double a, G4double density, G4State state=kStateUndefined, G4double temp, G4double pressure)*/
-	G4Material *gasDeut = new G4Material ("gasDeut", 1, 2, 0.800507*(gram/mm3), kStateGas, 30*kelvin, 0.5*bar);
+	
 
 
 	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -51,13 +53,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	//
 	// Target
 	//
-	
+	G4ThreeVector zeroVector(0.0,0.0,0.0);
+	G4RotationMatrix *zeroRotMatrix = new G4RotationMatrix();
 	G4ThreeVector vTarPosition = G4ThreeVector{0.0, 0.0, 0.0};
 	G4RotationMatrix* rotMtrx_Target = new G4RotationMatrix();
 	rotMtrx_Target->rotateX(0.*deg);
 	rotMtrx_Target->rotateY(-target_angle);
 	rotMtrx_Target->rotateZ(0.*deg); 
-if (!gasTarget)
+if (gasTarget==false)
 {
 	// CD2 target	
 	G4Box *solidTar = new G4Box(	"foil",	//target sizess
@@ -95,8 +98,7 @@ else
 	G4Tubs *tarContainer = new G4Tubs("whole target container", 0.0*mm, 40.0*mm,			//inner & outer radius
 																					25.0*mm,						//length
 																					0.0*rad, CLHEP::twopi);	//starting & ending angle)
-	G4ThreeVector zeroVector(0.0,0.0,0.0);
-	G4RotationMatrix *zeroRotMatrix = new G4RotationMatrix();
+/*
 	G4Tubs *deutDiscTube = new G4Tubs("deutDiscTube", 	0.0*mm, 12.5*mm,			//inner & outer radius
 																		2.0*mm,						//length
 																		0.0*rad, CLHEP::twopi);	//starting & ending angle
@@ -115,8 +117,7 @@ else
 
 	G4VSolid *gasCellSolid = new G4UnionSolid("deutCapS+deutDiscTube", tempDeuterUnion, deutCap, deutCapRot, secondCapShiftVect);
 	//There is deuterium gas solid (disc + 2 "caps")
-	printf("\n\nGas volume:\t%f\n\n", gasCellSolid->GetCubicVolume());
-
+*/
 	G4Tubs *tarFlangeTube = new G4Tubs("tarFlangeTube", 	12.5*mm, 26*mm,			//inner & outer radius
 																			3.5*mm,						//halflength
 																			0.0*rad, CLHEP::twopi);	//starting & ending angle
@@ -133,10 +134,11 @@ else
 
 	G4Sphere *stainlessSphere = new G4Sphere("stainlessSphere", 	78.63*mm, 78.636*mm,			//inner & outer radius
 																						0.0*rad, 4*CLHEP::pi,	//starting & ending phi
-																						0.0*rad, 12.95*2*deg);	//starting & ending theta
+																						0.0*rad, 12.8*deg);	//starting & ending theta
 
 	G4Box *sphereSSCutoff = new G4Box("sphereCutoff", 100.0*mm, 100.0*mm, 77.63*mm);
 	G4VSolid *SSCapSolid = new G4SubtractionSolid("stainlessSphere-sphereSSCutoff", stainlessSphere, sphereSSCutoff);
+
 	//##########################################################################################################
 	//#################################  DEUTERIUM TARGET COVER  ###############################################
 	//##########################################################################################################
@@ -179,17 +181,17 @@ else
 	*/
 	G4Tubs *mylarFoilSolid = new G4Tubs("mylarFoil",
 													0.0*mm, 27.5*mm,			//inner & outer radius
-													3.5*um,						//halflength
+													1.75*um,						//halflength
 													0.0*rad, CLHEP::twopi);
-	
+
 	G4LogicalVolume *targetLog = new G4LogicalVolume(	tarContainer,	//its solid
 																		matWrld,		//its material - I can take poly
-																		"mylarFoilLog");	//its name
-
+																		"targetLog");	//its name
+/*
 	G4LogicalVolume *gasCellLog = new G4LogicalVolume(	gasCellSolid,	//its solid
 																	gasDeut,		//its material - I can take poly
 																	"gasCellLog");	//its name
-
+*/
 	G4LogicalVolume *tarFlangeLog = new G4LogicalVolume(tarFlangeSolid,	//its solid
 																		matSS,		//its material - I can take poly
 																		"tarFlangeLog");	//its name
@@ -217,18 +219,18 @@ else
 							false,				//no boolean operation
 							0,						//copy number
 							checkOverlaps);	//overlaps checking
-
+/*
 	new G4PVPlacement(zeroRotMatrix,	//no rotation
 							vTarPosition,		//at position
 							gasCellLog,				//its logical volume
 							"Gas volume",		//its name
 							targetLog,			//its mother	volume
-							false,				//no boolean operation
+							true,					//boolean operation
 							0,						//copy number
 							checkOverlaps);	//overlaps checking
-
+*/
 	new G4PVPlacement(zeroRotMatrix,	//no rotation
-							G4ThreeVector(0.0,0.0,-75.63),		//at position
+							G4ThreeVector(0.0,0.0,-75.6),		//at position
 							SScapLog,				//its logical volume
 							"SS foil",		//its name
 							targetLog,			//its mother	volume
@@ -241,7 +243,7 @@ else
 							tarFlangeLog,				//its logical volume
 							"Target flange",		//its name
 							targetLog,			//its mother	volume
-							false,				//no boolean operation
+							true,				//no boolean operation
 							0,						//copy number
 							checkOverlaps);	//overlaps checking
 
@@ -250,29 +252,29 @@ else
 							tarCoverLog,				//its logical volume
 							"Target cover",		//its name
 							targetLog,			//its mother	volume
-							false,				//no boolean operation
+							true,				//no boolean operation
 							0,						//copy number
 							checkOverlaps);	//overlaps checking
 
 	new G4PVPlacement(zeroRotMatrix,	//no rotation
-							G4ThreeVector(0.0,0.0,16.0),		//at position
+							G4ThreeVector(0.0,0.0,16.0+1.75*um),		//at position
 							mylarFoilLog,				//its logical volume
 							"mylar foil 3.5um",		//its name
 							targetLog,			//its mother	volume
 							false,				//no boolean operation
 							0,						//copy number
 							checkOverlaps);	//overlaps checking
-}
+}// target type if
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxx	BOXES - SOLIDS	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 	// Det box
-	const G4double boxTelescope_x =	35*mm, boxTelescope_y = 35*mm, boxTelescope_z = 35*mm;
+	const G4double boxTele_X =	35*mm, boxTele_Y = 35*mm, boxTele_Z = 35*mm;
 	G4Box *boxTelescope = new G4Box(	"boxTelescope",
-												boxTelescope_x,
-												boxTelescope_y,
-												boxTelescope_z);
+												boxTele_X,
+												boxTele_Y,
+												boxTele_Z);
 
 	// silicon strip box 
 	const G4double Si_strip_x =	29*mm, Si_strip_y = 1.8125*mm, Si_strip_z = 0.5*mm;
@@ -347,43 +349,52 @@ log_rowCsI->SetVisAttributes(G4VisAttributes::GetInvisible());
 
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxx	DETECTORS POSITIONING	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxxxxxxxxxx	DETECTORS POSITIONING	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 //Deuterium telescope container positioning
-G4ThreeVector vPosition_2H_telescope = G4ThreeVector(	sin(deut_angle)*(boxTelescope_x+sql_dist)*mm,
-																		0,
-																		cos(deut_angle)*(boxTelescope_x+sql_dist)*mm);
+//For 5th geometry (with gas target there was detector shift by 6.7*mm at d=232 mm from rotation axis.
+//Rotation axis is at distance of 132*mm from target (0.0, 0.0, 0.0) at 9.0*deg
+helium_det_angle = helium_angle;
+if (gasTarget==true)
+{
+	helium_det_angle = helium_angle + 1.65*deg;
+}
+
+vPosition2HTelescope = G4ThreeVector(	sin(deut_angle) * (boxTele_Z+sql_dist) * mm,
+													0,
+													cos(deut_angle) * (boxTele_Z+sql_dist) * mm);
 
 //Helium telescope container positioning
-G4ThreeVector vPosition_6He_telescope = G4ThreeVector(	-sin(helium_angle)*(boxTelescope_x+sqr_dist)*mm,
-																			0,
-																			cos(helium_angle)*(boxTelescope_x+sqr_dist)*mm);
+vPosition6HeTelescope = G4ThreeVector(	-sin(helium_angle) * (sqr_dist+boxTele_Z) * mm,
+													0,
+													cos(helium_angle) * (sqr_dist+boxTele_Z) * mm);
+
+//Deuterium telescope virtContainer rotation
+G4RotationMatrix *deutTeleRotMtrx = new G4RotationMatrix();
+deutTeleRotMtrx->rotateX(0.0);
+deutTeleRotMtrx->rotateY(-deut_angle);
+deutTeleRotMtrx->rotateZ(0.0); 
 
 
-//Deuterium telescope container rotation
-G4RotationMatrix *deut_tele_rot_mtrx = new G4RotationMatrix();
-deut_tele_rot_mtrx->rotateX(0.0);
-deut_tele_rot_mtrx->rotateY(-deut_angle);
-deut_tele_rot_mtrx->rotateZ(0.0); 
+//Helium telescope virtContainer rotation
+G4RotationMatrix *heTeleRotMtrx = new G4RotationMatrix();
+heTeleRotMtrx->rotateX(0.0);
+heTeleRotMtrx->rotateY(helium_det_angle);
+heTeleRotMtrx->rotateZ(0.0);	
 
-
-//Helium telescope container rotation
-G4RotationMatrix *he_tele_rot_mtrx = new G4RotationMatrix();
-he_tele_rot_mtrx->rotateX(0.0);
-he_tele_rot_mtrx->rotateY(helium_angle);
-he_tele_rot_mtrx->rotateZ(0.0);	
 
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxx	DETECTORS PLACEMENT	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxx	DETECTORS PLACEMENT	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 	// Telescopes placement
+
 	// Deuterium telescope placement	
-	new G4PVPlacement(	deut_tele_rot_mtrx,			//rotation mtrx
-								vPosition_2H_telescope,		//vector of center of the detector
+	new G4PVPlacement(	deutTeleRotMtrx,				//rotation mtrx
+								vPosition2HTelescope,		//vector of center of the detector
 								logTelescope,					//its logical volume
-								"Deuterium telescope",			//its name
+								"Deuterium telescope",		//its name
 								log_wrld,						//its mother	volume
 								false,							//no boolean operation
 								0,									//copy number - for deuterium
@@ -391,10 +402,10 @@ he_tele_rot_mtrx->rotateZ(0.0);
 
 
 	// Helium telescope placement
-	new G4PVPlacement(	he_tele_rot_mtrx,				//rotation mtrx
-								vPosition_6He_telescope,	//vector of center of the detector
+	new G4PVPlacement(	heTeleRotMtrx,					//rotation mtrx
+								vPosition6HeTelescope,		//vector of center of the detector
 								logTelescope,					//its logical volume
-								"helium telescope",		//its name
+								"helium telescope",			//its name
 								log_wrld,						//its mother	volume
 								false,							//no boolean operation
 								1,									//copy number - for helium
@@ -405,27 +416,27 @@ he_tele_rot_mtrx->rotateZ(0.0);
 	// Silicon strips placement
 for (int iii=0; iii<16; iii++)
 {
-	new G4PVPlacement(	0,														//rotation mtrx
-								G4ThreeVector(0,(-27.1875+iii*3.625)*mm, -34.5*mm),	//at (0,0,0)
-								log_stripSi,										//its logical volume
-								"Si strip",											//its name
-								logTelescope,										//its mother	volume
-								false,												//no boolean operation
-								iii,													//copy number
-								checkOverlaps);									//overlaps checking
+	new G4PVPlacement(0,														//rotation mtrx
+							G4ThreeVector(0,(-27.1875+iii*3.625)*mm, -34.5*mm),	//at (0,0,0)
+							log_stripSi,										//its logical volume
+							"Si strip",											//its name
+							logTelescope,										//its mother	volume
+							false,												//no boolean operation
+							iii,													//copy number
+							checkOverlaps);									//overlaps checking
 }
 
 	// CsI strips placement
 for (int iii=0; iii<4; iii++)
 {
-	new G4PVPlacement(	0,														//rotation mtrx
-								G4ThreeVector(0,(24.75-iii*16.5)*mm, 1), 	//at (0,0,0)
-								log_rowCsI,											//its logical volume
-								"CsI strip",										//its name
-								logTelescope,										//its mother	volume
-								false,												//no boolean operation
-								iii,													//copy number
-								checkOverlaps);									//overlaps checking
+	new G4PVPlacement(0,														//rotation mtrx
+							G4ThreeVector(0,(24.75-iii*16.5)*mm, 1), 	//at (0,0,0)
+							log_rowCsI,											//its logical volume
+							"CsI strip",										//its name
+							logTelescope,										//its mother	volume
+							false,												//no boolean operation
+							iii,													//copy number
+							checkOverlaps);									//overlaps checking
 }
 
 
@@ -435,27 +446,27 @@ for (int iii=0; iii<4; iii++)
 	// Pixels placement
 for (int iii=0; iii<32; iii++)
 {
-	new G4PVPlacement(	0,												//rotation mtrx
-								G4ThreeVector((28.09375-iii*1.8125)*mm,0,0),	//at (0,0,0)
-								log_pixelSi,								//its logical volume
-								"Si pixel",									//its name
-								log_stripSi,					 			//its mother	volume
-								false,										//no boolean operation
-								iii,											//copy number
-								checkOverlaps);							//overlaps checking
+	new G4PVPlacement(0,															//rotation mtrx
+							G4ThreeVector((28.09375-iii*1.8125)*mm,0,0),	//at (0,0,0)
+							log_pixelSi,											//its logical volume
+							"Si pixel",												//its name
+							log_stripSi,					 						//its mother	volume
+							false,													//no boolean operation
+							iii,														//copy number
+							checkOverlaps);										//overlaps checking
 }
 
 	// Crystals placement
 for (int iii=0; iii<4; iii++)
 {
-	new G4PVPlacement(	0,														//rotation mtrx
-								G4ThreeVector((24.75-iii*16.5)*mm,0,0), 	//at (0,0,0)
-								log_crystalCsI,									//its logical volume
-								"CsI crystal",										//its name
-								log_rowCsI,											//its mother	volume
-								false,												//no boolean operation
-								iii,													//copy number
-								checkOverlaps);									//overlaps checking
+	new G4PVPlacement(0,														//rotation mtrx
+							G4ThreeVector((24.75-iii*16.5)*mm,0,0), 	//at (0,0,0)
+							log_crystalCsI,									//its logical volume
+							"CsI crystal",										//its name
+							log_rowCsI,											//its mother	volume
+							false,												//no boolean operation
+							iii,													//copy number
+							checkOverlaps);									//overlaps checking
 }
 
 

@@ -15,7 +15,7 @@ int main(int argc,char** argv)
 	//root output file
 	TFile *outFile=NULL;	
 	TTree *outTree=NULL;
-	outFile = new TFile("gurney.root","RECREATE");
+	outFile = new TFile("gurney_bis.root","RECREATE");
 	outTree=new TTree("simevents","MC events");
 
 	// Detect interactive mode (if no arguments) and define UI session
@@ -29,7 +29,7 @@ int main(int argc,char** argv)
 	
 	// Construct the default run manager
 	//
-	G4RunManager* runManager = new G4RunManager;
+	G4RunManager *runManager = new G4RunManager;
 	// Set mandatory initialization classes
 	runManager->SetUserInitialization(new DetectorConstruction());
 	runManager->SetUserInitialization(new QBBC);	
@@ -39,11 +39,11 @@ int main(int argc,char** argv)
 	
 	// Initialize visualization
 	//
-	G4VisManager* visManager = new G4VisExecutive;
+	G4VisManager *visManager = new G4VisExecutive;
 	// G4VisExecutive can take a verbosity argument - see /vis/verbose guidance.
 	// G4VisManager* visManager = new G4VisExecutive("Quiet");
 	visManager->Initialize();
-	G4UImanager* UImanager = G4UImanager::GetUIpointer();
+	G4UImanager *UImanager = G4UImanager::GetUIpointer();
 
 	// Process macro or start UI session
 	//

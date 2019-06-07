@@ -35,7 +35,6 @@ class EventAction : public G4UserEventAction
 
 	G4bool fEve2H;
 	G4bool fEve6He;
-	
 	G4double CsIdeut[16];
 	G4double SideutX[16];
 	G4double SideutY[16];

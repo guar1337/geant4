@@ -147,16 +147,15 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 
 	//double E_IN_CM_deut = IN_CM_deut.e();
 
-	evx = event->GetPrimaryVertex(0)->GetX0()/mm;
-	evy = event->GetPrimaryVertex(0)->GetY0()/mm;
-	evz = event->GetPrimaryVertex(0)->GetZ0()/mm;
-
+	evx = event->GetPrimaryVertex(0)->GetX0()*mm;
+	evy = event->GetPrimaryVertex(0)->GetY0()*mm;
+	evz = event->GetPrimaryVertex(0)->GetZ0()*mm;
+	
 }
 
 
 void EventAction::EndOfEventAction(const G4Event *event)
 {
-
 //G4cout<<"I am starting new EVENT"<<G4endl;
 G4HCofThisEvent *HCofThisEvent = event->GetHCofThisEvent();
 

@@ -9,7 +9,10 @@
 		"editor.insertSpaces": false,
 		"files.associations": {
 			"*.icc": "cpp",
-			"new": "cpp"
+			"new": "cpp",
+			"cmath": "cpp",
+			"complex": "cpp",
+			"mem": "cpp"
 		}
 	}
 }

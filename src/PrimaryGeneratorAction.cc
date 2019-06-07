@@ -3,13 +3,11 @@
 
 
 #include "G4Event.hh"
-#include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
 #include "G4RunManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
-#include "G4ios.hh"
 #include "ParticleInfo.hh"
 
 
@@ -22,43 +20,61 @@
 	PrimaryGeneratorAction::PrimaryGeneratorAction()
 	: G4VUserPrimaryGeneratorAction()
 	{
-	TFile *inBeamF = new TFile{"/home/guar/aku/geant4/build/beamSource.root","READ"};
-	if (!inBeamF->IsOpen()) G4Exception("PrimaryGeneratorAction::PrimaryGeneratorAction{}","beam sourceF not found", FatalException, ".");
-	inBeamTree = (TTree*)inBeamF->Get("beamSource");
-	inBeamTree->SetMakeClass(0);
-	inBeamTree->SetBranchAddress("lvBeam.", &in_lvBeam);
-	inBeamTree->SetBranchAddress("MWPC_1_X", &MWPC_1_X);
-	inBeamTree->SetBranchAddress("MWPC_2_X", &MWPC_2_X);
-	inBeamTree->SetBranchAddress("MWPC_1_Y", &MWPC_1_Y);
-	inBeamTree->SetBranchAddress("MWPC_2_Y", &MWPC_2_Y);
-	inBeamTree->SetBranchAddress("MWPC_1_Z", &MWPC_1_Z);
-	inBeamTree->SetBranchAddress("MWPC_2_Z", &MWPC_2_Z);
-	in_lvBeam = new TLorentzVector();
-	// default particle kinematic
-	particletable = G4ParticleTable::GetParticleTable();
-	iontable = G4IonTable::GetIonTable();
-	defProt=particletable->FindParticle("proton");
-	defNeut=particletable->FindParticle("neutron");
-	defAngel=particletable->FindParticle("geantino");
+		TFile *inBeamF = new TFile{"/home/guar/aku/geant4/build/beamSource.root","READ"};
+		if (!inBeamF->IsOpen()) G4Exception("PrimaryGeneratorAction::PrimaryGeneratorAction{}","beam sourceF not found", FatalException, ".");
+		inBeamTree = (TTree*)inBeamF->Get("beamSource");
+		inBeamTree->SetMakeClass(0);
+		inBeamTree->SetBranchAddress("lvBeam.", &in_lvBeam);
+		inBeamTree->SetBranchAddress("MWPC_1_X", &MWPC_1_X);
+		inBeamTree->SetBranchAddress("MWPC_2_X", &MWPC_2_X);
+		inBeamTree->SetBranchAddress("MWPC_1_Y", &MWPC_1_Y);
+		inBeamTree->SetBranchAddress("MWPC_2_Y", &MWPC_2_Y);
+		inBeamTree->SetBranchAddress("MWPC_1_Z", &MWPC_1_Z);
+		inBeamTree->SetBranchAddress("MWPC_2_Z", &MWPC_2_Z);
+		in_lvBeam = new TLorentzVector();
+		// default particle kinematic
+		particletable = G4ParticleTable::GetParticleTable();
+		iontable = G4IonTable::GetIonTable();
+		defProt=particletable->FindParticle("proton");
+		defNeut=particletable->FindParticle("neutron");
+		defAngel=particletable->FindParticle("geantino");
 
-	ELC= new G4EmCalculator();
-	G4NistManager* man = G4NistManager::Instance();
-	man->SetVerbose(0);
-	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
-	silicon_material = man->FindOrBuildMaterial("G4_Si");
-	
-	beam_spot_radius=7.5*mm;
-	tar_thick=20*um;
-	excitedStateEnergy_6He=1797*keV;
-	tar_angle = 35*deg;
-	tar_pos_Z = 0.0*mm;
-	MWPC_equivalent_of_Si = 660*um;
+		ELC= new G4EmCalculator();
+		G4NistManager* man = G4NistManager::Instance();
+		//man->SetVerbose(0);
+		silicon_material = man->FindOrBuildMaterial("G4_Si");
+		beam_spot_radius=7.5*mm;
+		tar_thick=20*um;
+		excitedStateEnergy_6He=1797*keV;
+		tar_angle = 33*deg;
+		tar_pos_Z = 0.0*mm;
+		MWPC_equivalent_of_Si = 660*um;
+
+		G4RotationMatrix *zeroRotMatrix = new G4RotationMatrix();
+		deutDiscTube = new G4Tubs("deutDiscTube", 	0.0*mm, 12.5*mm,			//inner & outer radius
+																		20.0*mm,						//length
+																		0.0*rad, CLHEP::twopi);	//starting & ending angle
+
+		deutSphere = new G4Sphere("deutSphere", 	0.0*mm, 78.63*mm,			//inner & outer radius
+																		0.0*rad, 4*CLHEP::pi,	//starting & ending phi
+																		0.0*rad, 12.95*2*deg);	//starting & ending theta
+
+		sphereCutoff = new G4Box("sphereCutoff", 100.0*mm, 100.0*mm, 77.63*mm);
+		deutCap = new G4SubtractionSolid("deutSphere-sphereCutoff", deutSphere, sphereCutoff);
+		G4ThreeVector tempUnionDeutVector(0.0,0.0,(-76.63+1.0)*mm);
+		tempDeuterUnion = new G4UnionSolid("deutDiscTube+deutCap", deutDiscTube, deutCap, zeroRotMatrix, tempUnionDeutVector);
+		G4RotationMatrix *deutCapRot = new G4RotationMatrix();
+		deutCapRot->rotateY(CLHEP::pi);
+		G4ThreeVector secondCapShiftVect(0.0,0.0,(76.63-1.0)*mm);
+		zAxis = G4ThreeVector(0.0,0.0,1.0);
+		gasCellSolid = new G4UnionSolid("deutCapS+deutDiscTube", tempDeuterUnion, deutCap, deutCapRot, secondCapShiftVect);
 
 	}
 
 		
 	PrimaryGeneratorAction::~PrimaryGeneratorAction()
 	{
+		delete gasCellSolid, tempDeuterUnion, ELC, deutDiscTube, deutSphere, sphereCutoff, deutCap;
 	}
 	
 void
@@ -98,15 +114,40 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	evX = MWPC_1_X + dX*Tcoef;
 	evY = MWPC_1_Y + dY*Tcoef;
 	evZ = MWPC_1_Z + dZ*Tcoef;
-
-
 	G4ThreeVector VertexPosition(evX,evY,evZ);
+	G4ThreeVector minusvectBeam(-dX,-dY,-dZ);
+	G4ThreeVector vectBeam(dX, dY, dZ);
+
+	if (DetectorConstruction::gasTarget==true && gasCellSolid->Inside(VertexPosition)==2)
+	{
+		maxDist = gasCellSolid->DistanceToOut(VertexPosition, vectBeam.unit());
+		minDist = gasCellSolid->DistanceToOut(VertexPosition, minusvectBeam.unit());
+		maxZ = maxDist*cos(zAxis.angle(vectBeam))*0.99;
+		minZ = -minDist*cos(zAxis.angle(vectBeam))*0.99;
+		G4double evZprym = CLHEP::RandFlat::shoot(minZ,maxZ);
+		
+		do
+		{
+			Tcoef = (evZprym-MWPC_1_Z)/dZ;
+
+			evX = MWPC_1_X + dX*Tcoef;
+			evY = MWPC_1_Y + dY*Tcoef;
+			evZ = MWPC_1_Z + dZ*Tcoef;
+		} while (gasCellSolid->Inside(VertexPosition)!=2);
+		//printf("inside?: %d\n", gasCellSolid->Inside(VertexPosition));
+	}
+
+
+	
+	//printf("evX: %f\tevY: %f\tevZ: %f\n", evX, evY, evZ);
 
 	//Eloss estimation - CHECK
-
+	//I can only use material which are in my setup, but how to get deut gas?
+	//That's why I will use silicon equivalent of deuterium gas
 	E_tar_loss = get_E(beam_T, MWPC_equivalent_of_Si, silicon_material);
 	beam_T= E_tar_loss;
-	E_tar_loss = get_E(beam_T, (tar_thick/2)*um*(1/cos(tar_angle)), Deut_target);
+
+	E_tar_loss = get_E(beam_T, (tar_thick/2)*um*(1/cos(tar_angle)), silicon_material);
 	beam_T= E_tar_loss;
 
 	
@@ -243,7 +284,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxx	PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	G4PrimaryParticle *	PrimaryParticle_2H_IN=new G4PrimaryParticle(def2H); //0 PP
+	G4PrimaryParticle *PrimaryParticle_2H_IN = new G4PrimaryParticle(def2H); //0 PP
 	PrimaryParticle_2H_IN->SetKineticEnergy(lv2H_IN.e()-mass2H);
 	PrimaryParticle_2H_IN->SetMomentumDirection(lv2H_IN.vect().unit());
 	
@@ -253,11 +294,11 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	INelasticINFO->Set_LV_2H_CM(lv2H_CM_IN);
 	INelasticINFO->Set_LV_6He_CM(lv6He_CM_IN);
 
-	G4PrimaryParticle * PrimaryParticle_4He_IN=new G4PrimaryParticle(def4He);
+	G4PrimaryParticle *PrimaryParticle_4He_IN = new G4PrimaryParticle(def4He);
 	PrimaryParticle_4He_IN->SetKineticEnergy(lv4He_IN.e()-mass4He);
 	PrimaryParticle_4He_IN->SetMomentumDirection(lv4He_IN.vect().unit());
 	/*
-	G4PrimaryParticle * PrimaryParticle_Neutron1_IN=new G4PrimaryParticle(defNeut);
+	G4PrimaryParticle *PrimaryParticle_Neutron1_IN=new G4PrimaryParticle(defNeut);
 	PrimaryParticle_Neutron1_IN->SetKineticEnergy(lvNeut1.e()-massNeut);
 	PrimaryParticle_Neutron1_IN->SetMomentumDirection(lvNeut1.vect().unit());
 
@@ -275,7 +316,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	inelasticVertex->SetWeight(0.1);
 	elasticVertex->SetWeight(1.0);
 	anEvent->AddPrimaryVertex(elasticVertex);
-	anEvent->AddPrimaryVertex(inelasticVertex);
+	//anEvent->AddPrimaryVertex(inelasticVertex);
 //
 //
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
