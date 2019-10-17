@@ -53,15 +53,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	//
 	// Target
 	//
-	G4ThreeVector zeroVector(0.0,0.0,0.0);
+	const G4ThreeVector zeroVector(0.0,0.0,0.0);
 	G4RotationMatrix *zeroRotMatrix = new G4RotationMatrix();
-	G4ThreeVector vTarPosition = G4ThreeVector{0.0, 0.0, 0.0};
-	G4RotationMatrix* rotMtrx_Target = new G4RotationMatrix();
-	rotMtrx_Target->rotateX(0.*deg);
-	rotMtrx_Target->rotateY(-target_angle);
-	rotMtrx_Target->rotateZ(0.*deg); 
+	const G4ThreeVector vTarPosition = G4ThreeVector{0.0, 0.0, 0.0};
+
 if (gasTarget==false)
 {
+	G4RotationMatrix* rotMtrx_Target = new G4RotationMatrix();
+	rotMtrx_Target->rotateX(0.0*deg);
+	rotMtrx_Target->rotateY(-45.0*deg);
+	rotMtrx_Target->rotateZ(0.0*deg); 
+
 	// CD2 target	
 	G4Box *solidTar = new G4Box(	"foil",	//target sizess
 											tar_x/2.0,
@@ -95,6 +97,10 @@ if (gasTarget==false)
 */
 else
 {
+	G4RotationMatrix* rotMtrxGasTarget = new G4RotationMatrix();
+	rotMtrxGasTarget->rotateX(0.0*deg);
+	rotMtrxGasTarget->rotateY(-33.0*deg);
+	rotMtrxGasTarget->rotateZ(0.0*deg); 
 	G4Tubs *tarContainer = new G4Tubs("whole target container", 0.0*mm, 40.0*mm,			//inner & outer radius
 																					25.0*mm,						//length
 																					0.0*rad, CLHEP::twopi);	//starting & ending angle)
@@ -211,7 +217,7 @@ else
 	//logTar->SetVisAttributes(new G4VisAttributes(false));
 	targetLog->SetVisAttributes(new G4VisAttributes(false));
 
-	new G4PVPlacement(rotMtrx_Target,	//no rotation
+	new G4PVPlacement(rotMtrxGasTarget,	//no rotation
 							vTarPosition,		//at position
 							targetLog,			//its logical volume
 							"Target container",		//its name
@@ -355,32 +361,35 @@ log_rowCsI->SetVisAttributes(G4VisAttributes::GetInvisible());
 //Deuterium telescope container positioning
 //For 5th geometry (with gas target there was detector shift by 6.7*mm at d=232 mm from rotation axis.
 //Rotation axis is at distance of 132*mm from target (0.0, 0.0, 0.0) at 9.0*deg
-helium_det_angle = helium_angle;
+sqlang = deut_angle;
+sqrang = helium_angle;
+
 if (gasTarget==true)
 {
-	helium_det_angle = helium_angle + 1.65*deg;
+	sqlang = deut_angle_5;
+	sqrang = helium_angle_5 + 1.65*deg;	
 }
 
-vPosition2HTelescope = G4ThreeVector(	sin(deut_angle) * (boxTele_Z+sql_dist) * mm,
+vPosition2HTelescope = G4ThreeVector(	sin(sqlang) * (boxTele_Z+sql_dist) * mm,
 													0,
-													cos(deut_angle) * (boxTele_Z+sql_dist) * mm);
+													cos(sqlang) * (boxTele_Z+sql_dist) * mm);
 
 //Helium telescope container positioning
-vPosition6HeTelescope = G4ThreeVector(	-sin(helium_angle) * (sqr_dist+boxTele_Z) * mm,
+vPosition6HeTelescope = G4ThreeVector(	-sin(sqrang) * (sqr_dist+boxTele_Z) * mm,
 													0,
-													cos(helium_angle) * (sqr_dist+boxTele_Z) * mm);
+													cos(sqrang) * (sqr_dist+boxTele_Z) * mm);
 
 //Deuterium telescope virtContainer rotation
 G4RotationMatrix *deutTeleRotMtrx = new G4RotationMatrix();
 deutTeleRotMtrx->rotateX(0.0);
-deutTeleRotMtrx->rotateY(-deut_angle);
+deutTeleRotMtrx->rotateY(-sqlang);
 deutTeleRotMtrx->rotateZ(0.0); 
 
 
 //Helium telescope virtContainer rotation
 G4RotationMatrix *heTeleRotMtrx = new G4RotationMatrix();
 heTeleRotMtrx->rotateX(0.0);
-heTeleRotMtrx->rotateY(helium_det_angle);
+heTeleRotMtrx->rotateY(sqrang);
 heTeleRotMtrx->rotateZ(0.0);	
 
 

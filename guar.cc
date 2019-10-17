@@ -9,9 +9,12 @@
 #include "G4UIExecutive.hh"
 #include "QBBC.hh"
 #include "Randomize.hh"
+#include "G4Timer.hh"
 
 int main(int argc,char** argv)
 {
+	G4Timer timer;
+	timer.Start();
 	//root output file
 	TFile *outFile=NULL;	
 	TTree *outTree=NULL;
@@ -35,8 +38,8 @@ int main(int argc,char** argv)
 	runManager->SetUserInitialization(new QBBC);	
 	runManager->SetUserAction(new PrimaryGeneratorAction());
 	runManager->SetUserAction(new EventAction(outTree));	
-	runManager->Initialize();	
-	
+	runManager->Initialize();
+		
 	// Initialize visualization
 	//
 	G4VisManager *visManager = new G4VisExecutive;
@@ -66,10 +69,11 @@ int main(int argc,char** argv)
 	// Free the store: user actions, physics_list and detector_description are
 	// owned and deleted by the run manager, so they should not be deleted 
 	// in the main() program !
-	
+
 	delete visManager;
 	delete runManager;
-	
+	timer.Stop();
+	printf("Zajelo to %f sekund\n",timer.GetRealElapsed());
 	outFile->cd();
 	outTree->Write();
 	outFile->Close();

@@ -20,6 +20,12 @@
 	PrimaryGeneratorAction::PrimaryGeneratorAction()
 	: G4VUserPrimaryGeneratorAction()
 	{
+		G4String beamFilePath = "/home/guar/aku/geant4/build/beamSource.root";
+		if (DetectorConstruction::gasTarget==true)
+		{
+			beamFilePath = "/home/guar/aku/geant4/build/beamSource_5.root";
+		}
+		
 		TFile *inBeamF = new TFile{"/home/guar/aku/geant4/build/beamSource.root","READ"};
 		if (!inBeamF->IsOpen()) G4Exception("PrimaryGeneratorAction::PrimaryGeneratorAction{}","beam sourceF not found", FatalException, ".");
 		inBeamTree = (TTree*)inBeamF->Get("beamSource");
@@ -35,9 +41,8 @@
 		// default particle kinematic
 		particletable = G4ParticleTable::GetParticleTable();
 		iontable = G4IonTable::GetIonTable();
-		defProt=particletable->FindParticle("proton");
+		def1H=particletable->FindParticle("proton");
 		defNeut=particletable->FindParticle("neutron");
-		defAngel=particletable->FindParticle("geantino");
 
 		ELC= new G4EmCalculator();
 		G4NistManager* man = G4NistManager::Instance();
@@ -46,7 +51,7 @@
 		beam_spot_radius=7.5*mm;
 		tar_thick=20*um;
 		excitedStateEnergy_6He=1797*keV;
-		tar_angle = 33*deg;
+		tar_angle = 45*deg;
 		tar_pos_Z = 0.0*mm;
 		MWPC_equivalent_of_Si = 660*um;
 
@@ -74,7 +79,13 @@
 		
 	PrimaryGeneratorAction::~PrimaryGeneratorAction()
 	{
-		delete gasCellSolid, tempDeuterUnion, ELC, deutDiscTube, deutSphere, sphereCutoff, deutCap;
+		delete gasCellSolid;
+		delete tempDeuterUnion;
+		delete ELC;
+		delete deutDiscTube;
+		delete deutSphere;
+		delete sphereCutoff;
+		delete deutCap;
 	}
 	
 void
@@ -84,19 +95,20 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	def6He = iontable->GetIon(2,6);
 	def4He = iontable->GetIon(2,4);
+	def1H = iontable->GetIon(1,1);
 	def2H = iontable->GetIon(1,2);
 
 	mass6He=def6He->GetPDGMass();
 	mass4He=def4He->GetPDGMass();
 	mass2H=def2H->GetPDGMass();
+	mass1H=def1H->GetPDGMass();
 	massNeut=defNeut->GetPDGMass();
 	massSum =mass6He + mass2H;	
 	
 	beam_T = (in_lvBeam->E()-in_lvBeam->M());
 	G4ThreeVector *vBeam = new G4ThreeVector{in_lvBeam->Px(), in_lvBeam->Py(), in_lvBeam->Pz()};
-	G4LorentzVector *lvBeam = new G4LorentzVector{*vBeam, beam_T + mass6He};
+	G4LorentzVector *lvBeam = new G4LorentzVector{*vBeam, in_lvBeam->E()};
 	//generate vertex position
-	//beam is cut by annular DSSD - sizes are given in mm
 
 	MWPC_1_X += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
 	MWPC_1_Y += CLHEP::RandFlat::shoot(0.0,1.25)-0.6125;
@@ -178,7 +190,11 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 	lv6He_EL.boost(boostVect_EL);
 	lv2H_EL.boost(boostVect_EL);
-	//Setting primary particles
+
+
+	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	//xxxxxxxxxxxxxx	ELASTIC PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	//deuterium
 	G4PrimaryParticle *PrimaryParticle_2H_EL = new G4PrimaryParticle(def2H); //2 PP
 	PrimaryParticle_2H_EL->SetKineticEnergy(lv2H_EL.e()-mass2H);
@@ -201,11 +217,11 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	elasticVertex->SetPrimary(PrimaryParticle_6He_EL);
 
 
-	
+
 //
 //
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxx	START OF INELastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxx	START OF INELastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	G4LorentzVector lv6He_IN=*lvBeam;
 	G4LorentzVector lv2H_IN=lvTarget;
@@ -282,8 +298,9 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //
 //
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxx	PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxx	INELASTIC PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+/*
 	G4PrimaryParticle *PrimaryParticle_2H_IN = new G4PrimaryParticle(def2H); //0 PP
 	PrimaryParticle_2H_IN->SetKineticEnergy(lv2H_IN.e()-mass2H);
 	PrimaryParticle_2H_IN->SetMomentumDirection(lv2H_IN.vect().unit());
@@ -297,7 +314,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4PrimaryParticle *PrimaryParticle_4He_IN = new G4PrimaryParticle(def4He);
 	PrimaryParticle_4He_IN->SetKineticEnergy(lv4He_IN.e()-mass4He);
 	PrimaryParticle_4He_IN->SetMomentumDirection(lv4He_IN.vect().unit());
-	/*
+	
 	G4PrimaryParticle *PrimaryParticle_Neutron1_IN=new G4PrimaryParticle(defNeut);
 	PrimaryParticle_Neutron1_IN->SetKineticEnergy(lvNeut1.e()-massNeut);
 	PrimaryParticle_Neutron1_IN->SetMomentumDirection(lvNeut1.vect().unit());
@@ -305,7 +322,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	G4PrimaryParticle * PrimaryParticle_Neutron2_IN=new G4PrimaryParticle(defNeut);
 	PrimaryParticle_Neutron2_IN->SetKineticEnergy(lvNeut2.e()-massNeut);
 	PrimaryParticle_Neutron2_IN->SetMomentumDirection(lvNeut2.vect().unit());
-	*/
+	
 	inelasticVertex = new G4PrimaryVertex(VertexPosition,0);
 		
 	inelasticVertex->SetPrimary(PrimaryParticle_2H_IN);				//0
@@ -313,7 +330,7 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	//inelasticVertex->SetPrimary(PrimaryParticle_Neutron1_IN);		//2
 	//inelasticVertex->SetPrimary(PrimaryParticle_Neutron2_IN);		//3
 
-	inelasticVertex->SetWeight(0.1);
+	inelasticVertex->SetWeight(0.1);*/
 	elasticVertex->SetWeight(1.0);
 	anEvent->AddPrimaryVertex(elasticVertex);
 	//anEvent->AddPrimaryVertex(inelasticVertex);
@@ -322,7 +339,12 @@ PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxx	END OF INELASTIC PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
+/*
+delete PrimaryParticle_2H_EL;
+delete ElasticINFO;
+delete PrimaryParticle_6He_EL;
+delete elasticVertex;
+*/
 }
 	
 G4double PrimaryGeneratorAction::get_E(G4double E, G4double r, G4Material* mat)

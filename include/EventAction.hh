@@ -36,16 +36,16 @@ class EventAction : public G4UserEventAction
 	G4bool fEve2H;
 	G4bool fEve6He;
 	G4double CsIdeut[16];
-	G4double SideutX[16];
+	G4double SideutX[32];
 	G4double SideutY[16];
 	G4double CsIhe[16];
-	G4double SiheX[16];
+	G4double SiheX[32];
 	G4double SiheY[16];
 
 	G4double beamT;
 
-	G4double sqlang, sqlde, sqletot, sqlesum, sqltheta, sqlphi, fsqlang;
-	G4double sqrang, sqrde, sqretot, sqresum, sqrtheta, sqrphi, fsqrang;
+	G4double sqlang, sqlde, sqletot;
+	G4double sqrang, sqrde, sqretot;
 
 	G4int SipixelNo;
 	G4int SistripNo;
@@ -89,6 +89,8 @@ class EventAction : public G4UserEventAction
 	G4LorentzVector *tmp_lvBeam;
 	G4LorentzVector *tmp_lv2H_CM;
 	G4LorentzVector *tmp_lv6He_CM;
-
+	
+	float progress = 0.0;
+	int consoleWidth;
 };
 #endif

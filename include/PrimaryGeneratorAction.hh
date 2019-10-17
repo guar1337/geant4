@@ -92,9 +92,8 @@ class G4Box;
 		G4ParticleDefinition *def6He;
 		G4ParticleDefinition *def4He;
 		G4ParticleDefinition *def2H;
-		G4ParticleDefinition *defProt;
+		G4ParticleDefinition *def1H;
 		G4ParticleDefinition *defNeut;
-		G4ParticleDefinition *defAngel;
 		G4VUserPrimaryParticleInformation *partINFO;
 
 		
@@ -102,10 +101,8 @@ class G4Box;
 		G4PrimaryVertex *elasticVertex;
 		G4PrimaryVertex *inelasticVertex;
 		G4EmCalculator *ELC;
-		double 
-		get_E(double E, double r, G4Material *mat);
-		double
-		get_R(double E, G4Material *mat);
+		double get_E(double E, double r, G4Material *mat);
+		double get_R(double E, G4Material *mat);
 	};
 
 #endif

@@ -13,6 +13,8 @@
 #include "G4VHitsCollection.hh"
 #include "G4SDManager.hh"
 
+#include <sys/ioctl.h> // For ioctl, TIOCGWINSZ
+#include <unistd.h> // For STDOUT_FILENO
 
 EventAction::EventAction():
 	G4UserEventAction()
@@ -37,6 +39,10 @@ EventAction::EventAction(TTree *T):
 	lvBeam = new TLorentzVector();
 	lv2H_CM = new TLorentzVector();
 	lv6He_CM = new TLorentzVector();
+
+	struct winsize size;
+	ioctl(STDOUT_FILENO,TIOCGWINSZ,&size);
+	consoleWidth = size.ws_col-8;
 	
 	tree->Bronch("lvBeam.",		"TLorentzVector",		&lvBeam);
 	tree->Bronch("lv2H.",		"TLorentzVector", 	&lv2H);
@@ -46,46 +52,37 @@ EventAction::EventAction(TTree *T):
 	
 	//Deuterium part 
 	tree->Branch("CsIdeut", 	CsIdeut, 	"CsIdeut[16]/D");
-	tree->Branch("SideutX", 	SideutX, 	"SideutX[16]/D");
+	tree->Branch("SideutX", 	SideutX, 	"SideutX[32]/D");
 	tree->Branch("SideutY",		SideutY, 	"SideutY[16]/D");
-	tree->Branch("sqlang",		&sqlang, 	"sqlang/D");
-	tree->Branch("fsqlang",		&fsqlang, 	"fsqlang/D");
-	tree->Branch("sqlde",		&sqlde,		"sqlde/D");
-	tree->Branch("sqletot",		&sqletot,	"sqletot/D");
-	tree->Branch("sqlphi",		&sqlphi,		"sqlphi/D");
-	tree->Branch("sqltheta",	&sqltheta,	"sqltheta/D");
-
+	tree->Branch("fsqlang",		&sqlang, 	"fsqlang/D");
+	tree->Branch("fsqlde",		&sqlde,		"fsqlde/D");
+	tree->Branch("fsqletot",	&sqletot,	"fsqletot/D");
 
 	//Helium part
 
 	tree->Branch("CsIhe",		CsIhe,		"CsIhe[16]/D");
 	tree->Branch("SiheY",		SiheY,		"SiheY[16]/D");
-	tree->Branch("SiheX",		SiheX,		"SiheX[16]/D");
-	tree->Branch("sqrang",		&sqrang,		"sqrang/D");
-	tree->Branch("sqrde",		&sqrde,		"sqrde/D");
-	tree->Branch("sqretot",		&sqretot,	"sqretot/D");
-	tree->Branch("sqrphi",		&sqrphi,		"sqrphi/D");
-	tree->Branch("sqrtheta",	&sqrtheta,	"sqrtheta/D");
-	tree->Branch("fsqrang",		&fsqrang, 	"fsqrang/D");
+	tree->Branch("SiheX",		SiheX,		"SiheX[32]/D");
+	tree->Branch("fsqrang",		&sqrang,		"fsqrang/D");
+	tree->Branch("fsqrde",		&sqrde,		"fsqrde/D");
+	tree->Branch("fsqretot",	&sqretot,	"fsqretot/D");
 
 	//BEAM
-	tree->Branch("beamT",	&beamT,"beamT/D");
-	tree->Branch("thetaCM",	&thetaCM,"thetaCM/D");
-	tree->Branch("phiCM",	&phiCM,"phiCM/D");
-	tree->Branch("evx",		&evx,	"evx/D");
-	tree->Branch("evy",		&evy,	"evy/D");
-	tree->Branch("evz",		&evz,	"evz/D");
+	tree->Branch("fbeamT",	&beamT,	"fbeamT/D");
+	tree->Branch("fevx",		&evx,		"fevx/D");
+	tree->Branch("fevy",		&evy,		"fevy/D");
+	tree->Branch("fevz",		&evz,		"fevz/D");
 
-	tree->Branch("X6He",		&X6He,"X6He/D");
-	tree->Branch("Y6He",		&Y6He,"Y6He/D");
-	tree->Branch("Z6He",		&Z6He,"Z6He/D");
+	tree->Branch("fX6He",	&X6He,	"fX6He/D");
+	tree->Branch("fY6He",	&Y6He,	"fY6He/D");
+	tree->Branch("fZ6He",	&Z6He,	"fZ6He/D");
 
-	tree->Branch("X2H",		&X2H,"X2H/D");
-	tree->Branch("Y2H",		&Y2H,"Y2H/D");
-	tree->Branch("Z2H",		&Z2H,"Z2H/D");
+	tree->Branch("fX2H",		&X2H,		"fX2H/D");
+	tree->Branch("fY2H",		&Y2H,		"fY2H/D");
+	tree->Branch("fZ2H",		&Z2H,		"fZ2H/D");
 
-	tree->Branch("fEve2H",		&fEve2H,"fEve2H/B");
-	tree->Branch("fEve6He",		&fEve6He,"fEve6He/B");
+	tree->Branch("fEve2H",	&fEve2H,	"fEve2H/B");
+	tree->Branch("fEve6He",	&fEve6He,"fEve6He/B");
 }
 
 EventAction::~EventAction()
@@ -105,7 +102,20 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event *event)
 {
+	Long_t nEntries = G4RunManager::GetRunManager()->GetNumberOfEventsToBeProcessed();
 
+	std::cout << "[";
+	int pos = consoleWidth * progress;
+	for (int i = 0; i < consoleWidth; ++i)
+	{
+		if (i < pos) std::cout << "#";
+		else if (i == pos) std::cout << ">";
+		else std::cout << ".";
+	}
+	std::cout << "] " << int(progress * 100.0) << " %\r";
+	std::cout.flush();
+
+	if( event->GetEventID() % ( nEntries / 100 ) == 0) progress += 0.01;
 	// initialisation per event
 	auto sdManager = G4SDManager::GetSDMpointer();
 	fsiliconHCID = sdManager->GetCollectionID("siliconColl");
@@ -114,18 +124,12 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 	//2H scattered
 	G4PrimaryParticle *PrimaryParticle_2H = event->GetPrimaryVertex(0)->GetPrimary(0);
 	v2H->SetXYZ(PrimaryParticle_2H->GetPx(), PrimaryParticle_2H->GetPy(), PrimaryParticle_2H->GetPz());
-	sqlesum = PrimaryParticle_2H->GetKineticEnergy()/MeV;
-	sqltheta = 180.*(PrimaryParticle_2H->GetMomentumDirection().getTheta())/double(CLHEP::pi);
-	sqlphi = 180.*(PrimaryParticle_2H->GetMomentumDirection().getPhi())/double(CLHEP::pi);
-	lv2H->SetVectM(*v2H, PrimaryParticle_2H->GetMass()+sqlesum);
+	lv2H->SetVectM(*v2H, PrimaryParticle_2H->GetMass());
 
 	//6He scattered
 	G4PrimaryParticle *PrimaryParticle_6He = event->GetPrimaryVertex(0)->GetPrimary(1);
 	v6He->SetXYZ(PrimaryParticle_6He->GetPx(), PrimaryParticle_6He->GetPy(), PrimaryParticle_6He->GetPz());
-	sqresum = PrimaryParticle_6He->GetKineticEnergy();
-	sqrtheta = 180.*(PrimaryParticle_6He->GetMomentumDirection().getTheta())/double(CLHEP::pi);
-	sqrphi = 180.*(PrimaryParticle_6He->GetMomentumDirection().getPhi())/double(CLHEP::pi);
-	lv6He->SetVectM(*v6He, PrimaryParticle_6He->GetMass()+sqresum);
+	lv6He->SetVectM(*v6He, PrimaryParticle_6He->GetMass());
 
 	//beam, (deuterium and helium in CM)
 	
@@ -136,12 +140,14 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 
 	tmp_lv2H_CM = new G4LorentzVector(particleInfo->Get_LV_2H_CM());
 	lv2H_CM->SetPxPyPzE(tmp_lv2H_CM->px(), tmp_lv2H_CM->py(), tmp_lv2H_CM->pz(), tmp_lv2H_CM->e());
+	thetaCM = tmp_lv2H_CM->theta();
+	phiCM = tmp_lv2H_CM->phi();
 
 	tmp_lv6He_CM = new G4LorentzVector(particleInfo->Get_LV_6He_CM());
 	lv6He_CM->SetPxPyPzE(tmp_lv6He_CM->px(), tmp_lv6He_CM->py(), tmp_lv6He_CM->pz(), tmp_lv6He_CM->e());
 
-	fsqlang = 180.0 * (lvBeam->Angle(*v2H))/double(CLHEP::pi);
-	fsqrang = 180.0 * (lvBeam->Angle(*v6He))/double(CLHEP::pi);
+	sqlang = 180.0 * (lvBeam->Angle(*v2H))/double(CLHEP::pi);
+	sqrang = 180.0 * (lvBeam->Angle(*v6He))/double(CLHEP::pi);
 
 	beamT =lvBeam->E()-lvBeam->M();
 
@@ -200,9 +206,9 @@ sqretot=0;
 sqletot=0;
 
 	//zeroing Silicon detectors
-std::fill(SideutX,SideutX+16,0.0);
+std::fill(SideutX,SideutX+32,0.0);
 std::fill(SideutY,SideutY+16,0.0);
-std::fill(SiheX,SiheX+16,0.0);
+std::fill(SiheX,SiheX+32,0.0);
 std::fill(SiheY,SiheY+16,0.0);
 //zeroing CesiumIodide detectors
 
