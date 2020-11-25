@@ -1,4 +1,4 @@
-//file:///home/guar/aku/geant4/include/EventAction.hh
+//file:///home/zalewski/aku/geant4/include/EventAction.hh
 #ifndef EventAction_h
 #define EventAction_h 1
 
@@ -8,10 +8,10 @@
 #include "G4IonTable.hh"
 
 #include "globals.hh"
-#include "/home/guar/root/build/include/TTree.h"
-#include "/home/guar/root/build/include/TFile.h"
+#include "/home/zalewski/root/build6_20_04/include/TTree.h"
+#include "/home/zalewski/root/build6_20_04/include/TFile.h"
 #include "ParticleInfo.hh"
-#include "/home/guar/root/build/include/TLorentzVector.h"
+#include "/home/zalewski/root/build6_20_04/include/TLorentzVector.h"
 
 
 
@@ -32,7 +32,7 @@ class EventAction : public G4UserEventAction
 
 	virtual void	BeginOfEventAction(const G4Event *event);
 	virtual void	EndOfEventAction(const G4Event *event);
-
+	
 	G4bool fEve2H;
 	G4bool fEve6He;
 	G4double CsIdeut[16];
@@ -89,6 +89,10 @@ class EventAction : public G4UserEventAction
 	G4LorentzVector *tmp_lvBeam;
 	G4LorentzVector *tmp_lv2H_CM;
 	G4LorentzVector *tmp_lv6He_CM;
+
+	G4float MWPC_1_X, MWPC_1_Y;
+	G4float MWPC_2_X, MWPC_2_Y;
+	G4float nx1, nx2, ny1, ny2;
 	
 	float progress = 0.0;
 	int consoleWidth;

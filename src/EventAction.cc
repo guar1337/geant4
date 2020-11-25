@@ -1,4 +1,4 @@
-//file:///home/guar/aku/geant4/src/EventAction.cc
+//file:///home/zalewski/aku/geant4/src/EventAction.cc
 #include "EventAction.hh"
 #include "g4root.hh"
 #include "Randomize.hh"
@@ -83,6 +83,17 @@ EventAction::EventAction(TTree *T):
 
 	tree->Branch("fEve2H",	&fEve2H,	"fEve2H/B");
 	tree->Branch("fEve6He",	&fEve6He,"fEve6He/B");
+
+	tree->Branch("MWPC_1_X", &MWPC_1_X,	 "MWPC_1_X/F");
+	tree->Branch("MWPC_2_X", &MWPC_2_X,	 "MWPC_2_X/F");
+	tree->Branch("MWPC_1_Y", &MWPC_1_Y,	 "MWPC_1_Y/F");
+	tree->Branch("MWPC_2_Y", &MWPC_2_Y,	 "MWPC_2_Y/F");
+
+	tree->Branch("nx1", &nx1,	 "nx1/F");
+	tree->Branch("nx2", &nx2,	 "nx2/F");
+	tree->Branch("ny1", &ny1,	 "ny1/F");
+	tree->Branch("ny2", &ny2,	 "ny2/F");
+
 }
 
 EventAction::~EventAction()
@@ -98,7 +109,6 @@ EventAction::~EventAction()
 	if(tmp_lvBeam) delete tmp_lvBeam;
 	if(tmp_lv2H_CM) delete tmp_lv2H_CM;
 }
-
 
 void EventAction::BeginOfEventAction(const G4Event *event)
 {
@@ -146,8 +156,18 @@ void EventAction::BeginOfEventAction(const G4Event *event)
 	tmp_lv6He_CM = new G4LorentzVector(particleInfo->Get_LV_6He_CM());
 	lv6He_CM->SetPxPyPzE(tmp_lv6He_CM->px(), tmp_lv6He_CM->py(), tmp_lv6He_CM->pz(), tmp_lv6He_CM->e());
 
-	sqlang = 180.0 * (lvBeam->Angle(*v2H))/double(CLHEP::pi);
-	sqrang = 180.0 * (lvBeam->Angle(*v6He))/double(CLHEP::pi);
+	MWPC_1_X = particleInfo->Get_MWPC_1_X();
+	MWPC_2_X = particleInfo->Get_MWPC_2_X();
+	MWPC_1_Y = particleInfo->Get_MWPC_1_Y();
+	MWPC_2_Y = particleInfo->Get_MWPC_2_Y();
+
+	nx1 = particleInfo->Get_nx1();
+	nx2 = particleInfo->Get_nx2();
+	ny1 = particleInfo->Get_ny1();
+	ny2 = particleInfo->Get_ny2();
+
+	sqlang = lvBeam->Angle(*v2H) * TMath::RadToDeg();
+	sqrang = lvBeam->Angle(*v6He) * TMath::RadToDeg();
 
 	beamT =lvBeam->E()-lvBeam->M();
 
@@ -218,7 +238,7 @@ std::fill(CsIhe,CsIhe+16,0.0);
 fEve2H = false;
 fEve6He = false;
 
-auto Si_n_hit = SiHC->entries();
+int Si_n_hit = SiHC->entries();
 if (Si_n_hit>0)
 {
 	for ( int iii = 0 ; iii < Si_n_hit; iii++)
@@ -261,7 +281,7 @@ if (Si_n_hit>0)
 	}	
 }
 
-auto CsI_n_hit = CsIHC->entries();
+int CsI_n_hit = CsIHC->entries();
 if (CsI_n_hit>0)
 {
 	for ( int iii = 0; iii < CsI_n_hit; iii++)

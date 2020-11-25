@@ -31,7 +31,7 @@ G4bool siliconSD::ProcessHits(G4Step *step, G4TouchableHistory *)
 {	
 	siliconHit *newHit = new siliconHit();
 	auto edep=step->GetTotalEnergyDeposit();
-	if (edep==0.) return true;
+	if (edep==0.0) return true;
 	G4StepPoint *preStep = step->GetPreStepPoint();
 	G4TouchableHistory *touchable = (G4TouchableHistory*)(preStep->GetTouchable()); 
 

@@ -22,7 +22,7 @@
 
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
-
+#include "/home/zalewski/aku/wrk/constants.h"
 
 class G4VPhysicalVolume;
 class G4LogicalVolume;
@@ -40,17 +40,17 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 		virtual void ConstructSDandField();
 		void SetMaxStep (G4double);
 
-		const G4double deut_angle		= 65.0*deg;
-		const G4double helium_angle		= 15.0*deg;
-		const G4double deut_angle_5		= 70.0*deg;
-		const G4double helium_angle_5	= 9.92*deg;
+		G4double deut_angle, deut_angle_5;
+		G4double helium_angle, helium_angle_5;
+		G4double target_angle;
+		G4double tarPosition;
 
-		G4double helium_det_angle, sqlang, sqrang;
-		const G4double target_angle	= 45.0*deg;
-		const G4double tar_x = 50.0*mm, tar_y = 40.0*mm, tar_z = 100.0*um;	//Target half-dimensions
+		G4double sqlang, sqrang;
+		const G4double tar_x = 50.0*mm, tar_y = 40.0*mm;	//Target half-dimensions
+		G4double tar_z;
 
-		const G4double sql_dist=170.0*mm;
-		const G4double sqr_dist=250.0*mm;
+		const G4double sql_dist=(170.0)*mm;
+		const G4double sqr_dist=(250.0)*mm;
 		
 		const G4double world_sizeX = 120*cm;
 		const G4double world_sizeY = 8*cm;

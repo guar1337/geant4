@@ -6,7 +6,7 @@
 #include "globals.hh"
 #include "G4PrimaryVertex.hh"
 #include "G4ThreeVector.hh"
-#include "/home/guar/root/build/include/TLorentzVector.h"
+#include "/home/zalewski/root/build6_20_04/include/TLorentzVector.h"
 #include "G4ExceptionSeverity.hh"
 #include "TTree.h"
 #include "DetectorConstruction.hh"
@@ -21,6 +21,8 @@
 #include <G4Orb.hh>
 #include <geomdefs.hh>
 
+#include "/home/zalewski/aku/wrk/constants.h"
+
 class G4Event;
 class G4Box;
 
@@ -30,6 +32,8 @@ class G4Box;
 	public:
 		PrimaryGeneratorAction();
 		virtual ~PrimaryGeneratorAction();
+
+		double MWPCrange(double position, int clusterMultiplicity);
 		
 		// method from the base class
 		virtual void GeneratePrimaries(G4Event*);				
@@ -40,6 +44,9 @@ class G4Box;
 
 
 	private:
+		G4int entryShift = 0;
+		G4int inputEventNo = 0;
+		G4int inputTreeLoopCounter = 0;
 		bool target_losses;
 	 	TTree *inBeamTree;
 		G4VSolid *gasCellSolid;
@@ -57,16 +64,19 @@ class G4Box;
 		
 		G4float MWPC_1_X, MWPC_1_Y, MWPC_1_Z;
 		G4float MWPC_2_X, MWPC_2_Y, MWPC_2_Z;
+		G4float in_nx1, in_nx2, in_ny1, in_ny2;
+
+		G4float in_MWPC_1_X, in_MWPC_1_Y, in_MWPC_1_Z;
+		G4float in_MWPC_2_X, in_MWPC_2_Y, in_MWPC_2_Z;
+
 		G4double evX, evY, evZ;
 		G4double dX, dY, dZ;
 		G4double Tcoef;
 
 		double mass6He;
 		double mass4He;
-		double mass1H;
-		double mass2H;
+		double massTar;
 		double massNeut;
-		double mass10Li;
 
 		double excitedStateEnergy_6He;
 		double massSum;
@@ -91,8 +101,7 @@ class G4Box;
 		G4IonTable *iontable;
 		G4ParticleDefinition *def6He;
 		G4ParticleDefinition *def4He;
-		G4ParticleDefinition *def2H;
-		G4ParticleDefinition *def1H;
+		G4ParticleDefinition *defTar;
 		G4ParticleDefinition *defNeut;
 		G4VUserPrimaryParticleInformation *partINFO;
 

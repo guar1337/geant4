@@ -24,7 +24,7 @@ endif()
 find_package(ROOT REQUIRED)
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(/home/guar/root/build/include)
+include_directories(/home/zalewski/root/build/include)
 include_directories(/usr/lib/x86_64-linux-gnu/qtcreator/plugins)
 
 

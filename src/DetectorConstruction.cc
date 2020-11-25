@@ -12,6 +12,35 @@ DetectorConstruction::~DetectorConstruction()
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
+
+		if (cs::runNo==1)
+		{
+		deut_angle		= (65.0 + cs::leftAngShift) *deg;
+		helium_angle	= (15.0 + cs::rightAngShift)*deg;
+		target_angle	= -45.0*deg;
+		tarPosition		= cs::tarPos;
+		tar_z			= (80.0 + cs::tarThicknessShift)*um;
+		}
+
+		if (cs::runNo==2)
+		{
+		deut_angle		= (50.0 + cs::leftAngShift) *deg;
+		helium_angle	= (15.0 + cs::rightAngShift)*deg;
+		target_angle	= -6.0*deg;
+		tarPosition		= cs::tarPos + 2.0;
+		tar_z			= 2.0 * (80.0 + cs::tarThicknessShift)*um;
+		}
+
+		if (cs::runNo==3)
+		{
+		deut_angle		= (35.0 + cs::leftAngShift) *deg;
+		helium_angle	= (15.0 + cs::rightAngShift)*deg;
+		target_angle	= 0.0*deg;
+		tarPosition		= cs::tarPos + 2.0;
+		tar_z			= 2.0 * (80.0 + cs::tarThicknessShift)*um;
+		}
+
+		
 	G4bool checkOverlaps = true;
 	// Get nist material manager
 	G4NistManager *nist = G4NistManager::Instance();
@@ -55,16 +84,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 	//
 	const G4ThreeVector zeroVector(0.0,0.0,0.0);
 	G4RotationMatrix *zeroRotMatrix = new G4RotationMatrix();
-	const G4ThreeVector vTarPosition = G4ThreeVector{0.0, 0.0, 0.0};
+	const G4ThreeVector vTarPosition = G4ThreeVector{0.0, 0.0, tarPosition};
 
 if (gasTarget==false)
 {
 	G4RotationMatrix* rotMtrx_Target = new G4RotationMatrix();
-	rotMtrx_Target->rotateX(0.0*deg);
-	rotMtrx_Target->rotateY(-45.0*deg);
-	rotMtrx_Target->rotateZ(0.0*deg); 
+	rotMtrx_Target->rotateY(target_angle);
 
-	// CD2 target	
+
+	// CD2 target	1
 	G4Box *solidTar = new G4Box(	"foil",	//target sizess
 											tar_x/2.0,
 											tar_y/2.0,
@@ -75,13 +103,13 @@ if (gasTarget==false)
 																	"logTar");	//its name
 	
 	new G4PVPlacement(rotMtrx_Target,	//no rotation
-							vTarPosition,		//at position
-							logTar,				//its logical volume
-							"phys_Target",		//its name
-							log_wrld,			//its mother	volume
-							false,				//no boolean operation
-							0,						//copy number
-							checkOverlaps);	//overlaps checking
+						vTarPosition,		//at position
+						logTar,				//its logical volume
+						"phys_Target",		//its name
+						log_wrld,			//its mother	volume
+						false,				//no boolean operation
+						0,						//copy number
+						checkOverlaps);	//overlaps checking
 
 }
 	// Gas target	
@@ -364,20 +392,14 @@ log_rowCsI->SetVisAttributes(G4VisAttributes::GetInvisible());
 sqlang = deut_angle;
 sqrang = helium_angle;
 
-if (gasTarget==true)
-{
-	sqlang = deut_angle_5;
-	sqrang = helium_angle_5 + 1.65*deg;	
-}
-
-vPosition2HTelescope = G4ThreeVector(	sin(sqlang) * (boxTele_Z+sql_dist) * mm,
-													0,
-													cos(sqlang) * (boxTele_Z+sql_dist) * mm);
+vPosition2HTelescope = G4ThreeVector(	(sin(sqlang) * (boxTele_Z+sql_dist))* mm,
+										cs::widthStripX,
+										(cos(sqlang) * (boxTele_Z+sql_dist))* mm);
 
 //Helium telescope container positioning
-vPosition6HeTelescope = G4ThreeVector(	-sin(sqrang) * (sqr_dist+boxTele_Z) * mm,
-													0,
-													cos(sqrang) * (sqr_dist+boxTele_Z) * mm);
+vPosition6HeTelescope = G4ThreeVector(	(-sin(sqrang) * (sqr_dist+boxTele_Z))* mm,
+										0.0,
+										(cos(sqrang) * (sqr_dist+boxTele_Z))* mm);
 
 //Deuterium telescope virtContainer rotation
 G4RotationMatrix *deutTeleRotMtrx = new G4RotationMatrix();

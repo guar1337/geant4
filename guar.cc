@@ -18,7 +18,8 @@ int main(int argc,char** argv)
 	//root output file
 	TFile *outFile=NULL;	
 	TTree *outTree=NULL;
-	outFile = new TFile("gurney_bis.root","RECREATE");
+	TString fName = "gurney_bis_" +  std::to_string(cs::runNo) + ".root";
+	outFile = new TFile(fName.Data(),"RECREATE");
 	outTree=new TTree("simevents","MC events");
 
 	// Detect interactive mode (if no arguments) and define UI session
