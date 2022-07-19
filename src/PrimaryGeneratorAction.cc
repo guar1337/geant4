@@ -1,289 +1,532 @@
 #include "PrimaryGeneratorAction.hh"
+#include "TFile.h"
+
 
 #include "G4Event.hh"
-#include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
 #include "G4RunManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
-#include "G4ios.hh"
-#include "ParticleInfo.hh"
+
 
 
 #include <fstream>
 #include <iostream>
 #include <iomanip> 
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......	
+	
 
 	PrimaryGeneratorAction::PrimaryGeneratorAction()
 	: G4VUserPrimaryGeneratorAction()
 	{
-	// default particle kinematic
-	particletable = G4ParticleTable::GetParticleTable();
-	iontable = G4IonTable::GetIonTable();
-	defProt=particletable->FindParticle("proton");
-	defNeut=particletable->FindParticle("neutron");
-	defAngel=particletable->FindParticle("geantino");
 
-	ELC= new G4EmCalculator();
-	G4NistManager* man = G4NistManager::Instance();
-	man->SetVerbose(0);
-	Deut_target = man->FindOrBuildMaterial("G4_POLYETHYLENE");
+		geometryID = cs::runNo/10;
+		printf("\ncs::runNo used is: %d inferred geometry is: %d\n", cs::runNo, geometryID);
+		G4String beamFilePath;
+		if (geometryID==1)
+		{
+			tar_thick = (60.0)*um;
+			tar_angle = 45.0*TMath::DegToRad();
+			beamFilePath = "/home/zalewski/dataTmp/beamSource/beamSource1.root";
+			tar_pos_Z = 10.0;
+		}
+
+		if (geometryID==2)
+		{
+			tar_thick = (2.0*60.0)*um;
+			tar_angle = 6.0*TMath::DegToRad();
+			beamFilePath = "/home/zalewski/dataTmp/beamSource/beamSource2.root";
+			tar_pos_Z = 10.0;
+		}
+
+		if (geometryID==3)
+		{
+			tar_thick = (2.0*60.0)*um;
+			tar_angle = 0.0*TMath::DegToRad();
+			beamFilePath = "/home/zalewski/dataTmp/beamSource/beamSource3.root";
+			tar_pos_Z = 10.0;
+		}
+
+
+		
+		in_lvBeam = new TLorentzVector();
+		TFile *inBeamF = new TFile(beamFilePath.data(),"READ");
+		if (!inBeamF->IsOpen()) G4Exception("PrimaryGeneratorAction::PrimaryGeneratorAction","beam sourceF not found", FatalException, beamFilePath.data());
+		inBeamTree = (TTree*)inBeamF->Get("beamSource");
+		inBeamTree->SetMakeClass(0);
+		inBeamTree->SetBranchAddress("lvBeam", &in_lvBeam);
+
+		inBeamTree->SetBranchAddress("MWPC_1_X", &in_MWPC_1_X);
+		inBeamTree->SetBranchAddress("MWPC_2_X", &in_MWPC_2_X);
+		inBeamTree->SetBranchAddress("MWPC_1_Y", &in_MWPC_1_Y);
+		inBeamTree->SetBranchAddress("MWPC_2_Y", &in_MWPC_2_Y);
+
+		
+		// default particle kinematic
+		particletable = G4ParticleTable::GetParticleTable();
+		iontable = G4IonTable::GetIonTable();
+
+		defNeut=particletable->FindParticle("neutron");
+
+		ELC= new G4EmCalculator();
+		G4NistManager* man = G4NistManager::Instance();
+		//man->SetVerbose(0);
+		silicon_material = man->FindOrBuildMaterial("G4_Si");
+
+		//ElasticINFO = new ParticleInfo;
+		//INelasticINFO = new ParticleInfo;
+
+
+		//PrimaryParticle_2H_EL = new G4PrimaryParticle();
+		//PrimaryParticle_6He_EL = new G4PrimaryParticle();
+		//PrimaryParticle_3H_DT = new G4PrimaryParticle();
+		//PrimaryParticle_5He_DT = new G4PrimaryParticle();
+		
+
+
+		excitedStateEnergy_6He=1797*keV;
+		MWPC_equivalent_of_Si = 660*um;
+
+	}
+
+		
+PrimaryGeneratorAction::~PrimaryGeneratorAction()
+{
+	delete ELC;
+}
+
+void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
+{
+
+	inputEventNo = anEvent->GetEventID() - entryShift;
 	
-	beam_spot_radius=7.5*mm;
-	tar_thick=20*um;
-	Ex6He=1797*keV;
+	if (geometryID==1 && inputEventNo == 5942259)
+	{
+		inputTreeLoopCounter++;
+		entryShift = inputTreeLoopCounter * 5942259;
+		//printf("Loop number %d for 1st geo\nTree entry numer: %d\n",inputTreeLoopCounter, anEvent->GetEventID());
 	}
 	
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-	PrimaryGeneratorAction::~PrimaryGeneratorAction()
+	if (geometryID==2 && inputEventNo == 15750492)
 	{
+		inputTreeLoopCounter++;
+		entryShift = inputTreeLoopCounter * 15750492;
+		//printf("Loop number %d for 2nd geo\nTree entry numer: %d\n",inputTreeLoopCounter, anEvent->GetEventID());
+	}
+
+	if (geometryID==3 && inputEventNo == 35570688)
+	{
+		inputTreeLoopCounter++;
+		entryShift = inputTreeLoopCounter * 35570688;
+		//printf("Loop number: %d for 3rd geo\nTree entry numer: %d\n",inputTreeLoopCounter, anEvent->GetEventID());
 	}
 	
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-	void
-	PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
-	{
-
-	def6He = iontable->GetIon(2,6);
-	def4He = iontable->GetIon(2,4);
+	
+	def1H = iontable->GetIon(1,1);
 	def2H = iontable->GetIon(1,2);
+	def3H = iontable->GetIon(1,3);
+	def4He = iontable->GetIon(2,4);
+	def5He = iontable->GetIon(2,5);
+	def6He = iontable->GetIon(2,6);	
+	defTar = iontable->GetIon(1,cs::tarMass);
 
-	mass6He=def6He->GetPDGMass();
+	massNeut = defNeut->GetPDGMass();
+	mass1H = def1H->GetPDGMass();
+	mass2H = def2H->GetPDGMass();
+	mass3H = def3H->GetPDGMass();
 	mass4He=def4He->GetPDGMass();
-	mass2H=def2H->GetPDGMass();
+	mass5He=def5He->GetPDGMass();
+	mass6He=def6He->GetPDGMass();
+	massTar=defTar->GetPDGMass();
 	massNeut=defNeut->GetPDGMass();
-	massSum =mass6He + mass2H;	
 
-	double beam_T = 150*MeV;
-	double beam_mean_T = CLHEP::RandGauss::shoot(beam_T,beam_T*0.025/2.355);
-	beam_T=beam_mean_T;
+	if (flag)
+	{
+		printf("\n\n\nneut: %f\t1H: %f\t2H: %f\t3H: %f\t4He: %f\t5He: %f\t6He: %f\n\n\n", massNeut, mass1H, mass2H, mass3H, mass4He, mass5He, mass6He);
+		flag=false;
+	}
 	
+	
+	inBeamTree->GetEntry(inputEventNo);
+	parameters.push_back(-1.0);
+	parameters.push_back(-2.1375);
+	parameters.push_back(0.2);
+	parameters.push_back(-1.125);
 	//generate vertex position
-	G4double relative_Z_position;
-	//beam is cut by annular DSSD - sizes are given in mm
-	Vertex_X = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
-	Vertex_Y = CLHEP::RandGauss::shoot(0,(beam_spot_radius)/2.355);
-	relative_Z_position = CLHEP::RandFlat::shoot(-1.4142*tar_thick, 1.4142*tar_thick);
-	Vertex_Z = relative_Z_position*um-Vertex_X*mm;	
-	G4ThreeVector VertexPosition(Vertex_X,Vertex_Y,Vertex_Z);
+	MWPC_1_X = in_MWPC_1_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_1_X];
+	MWPC_1_Y = in_MWPC_1_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_1_Y];
+
+	MWPC_2_X = in_MWPC_2_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_2_X];
+	MWPC_2_Y = in_MWPC_2_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_2_Y];
+	
+	MWPC_1_Z = -816.0;
+	MWPC_2_Z = -270.0;
+
+	dX=MWPC_2_X-MWPC_1_X;
+	dY=MWPC_2_Y-MWPC_1_Y;
+	dZ=MWPC_2_Z-MWPC_1_Z;
+
+	
+	double ene_beam = in_lvBeam->E();
+	double mom_beam = sqrt(ene_beam*ene_beam - cs::mass6He*cs::mass6He);
+	G4ThreeVector vBeam(dX, dY, dZ);
+	vBeam.setMag(mom_beam);
+	G4LorentzVector lvBeam(vBeam, in_lvBeam->E());
+
+	double tmpTarPos = tar_pos_Z + CLHEP::RandFlat::shoot(-tar_thick/2.0, tar_thick/2.0);
+	Tcoef=(cos(tar_angle)*tmpTarPos-sin(tar_angle)*MWPC_1_X - cos(tar_angle)*MWPC_1_Z)/(sin(tar_angle)*dX+cos(tar_angle)*dZ);
+
+	evX = MWPC_1_X + dX*Tcoef;
+	evY = MWPC_1_Y + dY*Tcoef;
+	evZ = MWPC_1_Z + dZ*Tcoef;
+
+	//printf("evX: %f\tevY: %f\tevZ: %f\n", evX, evY, evZ);
+	
+	G4ThreeVector VertexPosition(evX,evY,evZ);
+	G4ThreeVector minusvectBeam(-dX,-dY,-dZ);
+	G4ThreeVector vectBeam(dX, dY, dZ);
+
+	
+	//printf("evX: %f\tevY: %f\tevZ: %f\n", evX, evY, evZ);
 
 	//Eloss estimation - CHECK
-	E_tar_loss = get_E(beam_T, (tar_thick/2)*um+Vertex_Z*um, Deut_target);	
-	beam_T= E_tar_loss;
-	const double mom6He = sqrt(beam_T*beam_T+2*mass6He*beam_T);
-	G4LorentzVector V_BEAM(0,0,mom6He,beam_T+mass6He);
-	G4LorentzVector INI_V_2H(0,0,0,mass2H);
+	//I can only use material which are in my setup, but how to get deut gas?
+	//That's why I will use silicon equivalent of deuterium gas
+	
+	const G4LorentzVector lvTarget(0.0, 0.0, 0.0, massTar);
+
+	const double theta_CM = acos(CLHEP::RandFlat::shoot(-1.0, 1.0));
+	const double phi_CM = CLHEP::RandFlat::shoot(0.0, 2.0*CLHEP::pi);
+	double realTheta;
 
 
-
+//
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxx	START OF elastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-	//ELASTIC SCATTERING VECTORS
-	G4LorentzVector EL_V_6He(0,0,mom6He,beam_T+mass6He);
-	G4LorentzVector EL_V_2H(0,0,0,mass2H);
-	G4LorentzVector EL_V_CM = EL_V_6He+EL_V_2H;
-	G4ThreeVector boostVect = EL_V_CM.boostVector();
 
-	EL_V_6He.boost(-boostVect);
-	EL_V_2H.boost(-boostVect);
-	//CM PART
-	double theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
-	double phi_CM = CLHEP::RandFlat::shoot(0.0,2*double(CLHEP::pi));	
-	EL_V_6He.rotate(0,	theta_CM,	0	);
-	EL_V_6He.rotate(0,	0,	phi_CM	);
-	EL_V_2H.rotate(0,	-theta_CM,	0	);
-	EL_V_2H.rotate(0,	0,	-phi_CM	);
-	G4LorentzVector LV_deut_CM_EL(EL_V_2H);
-	//G4cout<<" ZONK "<<theta_CM<<G4endl;
-	//G4cout<<V_BEAM.e()-mass6He<<" =original"<<""<<G4endl;
-	EL_V_6He.boost(boostVect);
-	EL_V_2H.boost(boostVect);
-	//G4cout<<mass6He<<G4endl;
-	//Setting primary particles
-	//deuterium
-	G4PrimaryParticle *PrimaryParticle_2H=new G4PrimaryParticle(def2H); //2 PP
-	PrimaryParticle_2H->SetKineticEnergy(EL_V_2H.e()-mass2H);
-	PrimaryParticle_2H->SetMomentumDirection(EL_V_2H.vect().unit());
+		G4LorentzVector lv6He_EL(lvBeam);
+		G4LorentzVector lv2H_EL(lvTarget);
+		G4LorentzVector lvCM_EL = lv6He_EL+lv2H_EL;
+		G4ThreeVector boostVect_EL = lvCM_EL.boostVector();
+
+		lv6He_EL.boost(-boostVect_EL);
+		lv2H_EL.boost(-boostVect_EL);
+		//CM PART
+
+		lv6He_EL.setTheta(theta_CM);
+		lv6He_EL.setPhi(phi_CM);
+		realTheta = lv6He_EL.vect().angle(lvBeam.vect());
+
+		lv2H_EL.setVect(-lv6He_EL.vect());
+
+		G4LorentzVector lv2H_CM_EL(lv2H_EL);
+		G4LorentzVector lv6He_CM_EL(lv6He_EL);
+
+		lv6He_EL.boost(boostVect_EL);
+		lv2H_EL.boost(boostVect_EL);
+
+
+		//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//xxxxxxxxxxxxxx	ELASTIC PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//deuterium
+		G4PrimaryParticle *PrimaryParticle_2H_EL = new G4PrimaryParticle(defTar);
+		Double_t kineticEnergyH2 = lv2H_EL.e()-lv2H_EL.m();
+		if (kineticEnergyH2<0.1 && cs::runNo==30 && cs::tarMass==2)
+		{
+			printf("No. of event: %d\tenergy: %f\n", inputEventNo, kineticEnergyH2);
+			kineticEnergyH2 = 100.0;
+		}
+		PrimaryParticle_2H_EL->SetKineticEnergy(kineticEnergyH2);
+
+		PrimaryParticle_2H_EL->SetMomentumDirection(lv2H_EL.vect().unit());
+		//I put all particles, that are not in PrimaryVertex into ParticleInfo of 2H
+		//That is: lv2H_CM, lv6He_CM and lvBeam
+		ParticleInfo *ElasticINFO = new ParticleInfo;
+		PrimaryParticle_2H_EL->SetUserInformation(ElasticINFO);
+		ElasticINFO->Set_LV_Beam(lvBeam);
+		ElasticINFO->Set_LV_2H_CM(lv2H_CM_EL);
+		ElasticINFO->Set_LV_6He_CM(lv6He_CM_EL);
+
+		ElasticINFO->Set_MWPC_1_X(in_MWPC_1_X);
+		ElasticINFO->Set_MWPC_2_X(in_MWPC_2_X);
+		ElasticINFO->Set_MWPC_1_Y(in_MWPC_1_Y);
+		ElasticINFO->Set_MWPC_2_Y(in_MWPC_2_Y);
+
+		ElasticINFO->Set_nx1(in_nx1);
+		ElasticINFO->Set_nx2(in_nx2);
+		ElasticINFO->Set_ny1(in_ny1);
+		ElasticINFO->Set_ny2(in_ny2);
+		ElasticINFO->Set_thetaCM(realTheta*TMath::RadToDeg());
+
+		//Helium 6
+		G4PrimaryParticle *PrimaryParticle_6He_EL = new G4PrimaryParticle(def6He);
+		PrimaryParticle_6He_EL->SetKineticEnergy(lv6He_EL.e()-mass6He);		
+		PrimaryParticle_6He_EL->SetMomentumDirection(lv6He_EL.vect().unit() );
+
+		elasticVertex = new G4PrimaryVertex(VertexPosition,0);
+		elasticVertex->SetPrimary(PrimaryParticle_2H_EL);
+		elasticVertex->SetPrimary(PrimaryParticle_6He_EL);
+		anEvent->AddPrimaryVertex(elasticVertex);
 	
-	ParticleInfo *ElasticINFO = new ParticleInfo;
-	PrimaryParticle_2H->SetUserInformation(ElasticINFO);
-	ElasticINFO->Set_LV_Beam(V_BEAM);
-	ElasticINFO->Set_LV_2H_CM(LV_deut_CM_EL);
-
-	//Helium 6
-	G4PrimaryParticle * PrimaryParticle_6He=new G4PrimaryParticle(def6He);//3 PP
-	PrimaryParticle_6He->SetKineticEnergy(EL_V_6He.e()-mass6He);	
-	PrimaryParticle_6He->SetMomentumDirection(EL_V_6He.vect().unit() );
-
-	elasticVertex = new G4PrimaryVertex(VertexPosition,0);
-	elasticVertex->SetPrimary(PrimaryParticle_2H);
-	elasticVertex->SetPrimary(PrimaryParticle_6He);
-
-
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxx	START OF INelastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	
 
-	G4LorentzVector INEL_V_6He=V_BEAM;
+//
+//
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxx	START OF INELastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+/*
+		G4LorentzVector lv6He_IN=lvBeam;
 
-	G4LorentzVector INEL_V_2H=INI_V_2H;
-	G4LorentzVector INEL_V_CM = INEL_V_6He+INEL_V_2H;
+		G4LorentzVector lv2H_IN=lvTarget;
+		G4LorentzVector lvCM_IN = lv6He_IN+lv2H_IN;
 
-	G4ThreeVector INboostVect = INEL_V_CM.boostVector();
-	INEL_V_6He.boost(-INboostVect);
-	INEL_V_2H.boost(-INboostVect);
-	double pumpkin = INEL_V_2H.e() + INEL_V_6He.e();
-	double face	= INEL_V_CM.e();
+		G4ThreeVector boostVect_IN = lvCM_IN.boostVector();
+		lv6He_IN.boost(-boostVect_IN);
+		lv2H_IN.boost(-boostVect_IN);
 		//Let's go inelastic now!
-	double newEcm	= INEL_V_2H.e() + INEL_V_6He.e() - Ex6He;
-	double newE2H	= (1/(2*newEcm))*(newEcm*newEcm-mass6He*mass6He+mass2H*mass2H);
-	double newE6He	= (1/(2*newEcm))*(newEcm*newEcm+mass6He*mass6He-mass2H*mass2H)+Ex6He;
-	double newMom2H	= sqrt(newE2H*newE2H-mass2H*mass2H);
-	double newMom6He = sqrt(newE6He*newE6He-mass6He*mass6He);
-	printf("\n\nWhatever\n\n");
-	INEL_V_2H.setE(newE2H);
-	INEL_V_6He.setE(newE6He+Ex6He);
- 
-	INEL_V_2H.setRho(newMom2H);
-	INEL_V_6He.setRho(newMom6He);
+		G4double newEcm	= lv2H_IN.e() + lv6He_IN.e() - excitedStateEnergy_6He;
+		G4double newE2H	= (1/(2*newEcm))*(newEcm*newEcm-mass6He*mass6He+lv2H_IN.m()*lv2H_IN.m());
+		G4double newE6He	= (1/(2*newEcm))*(newEcm*newEcm+mass6He*mass6He-lv2H_IN.m()*lv2H_IN.m())+excitedStateEnergy_6He;
+		G4double newMom2H	= sqrt(newE2H*newE2H-lv2H_IN.m()*lv2H_IN.m());
+		G4double newMom6He = sqrt(newE6He*newE6He-mass6He*mass6He);
 
-	//CM PART
-	INEL_V_6He.rotate(0,	theta_CM,	0	);
-	INEL_V_6He.rotate(0,	0,	phi_CM	);
-	INEL_V_2H.rotate(0,	-theta_CM,	0	);
-	INEL_V_2H.rotate(0,	0,	-phi_CM	);
-	
-	G4LorentzVector LV_deut_CM_inel(INEL_V_2H);
+		lv2H_IN.setE(newE2H);
+		lv6He_IN.setE(newE6He+excitedStateEnergy_6He);
+		
+		lv2H_IN.setRho(newMom2H);
+		lv6He_IN.setRho(newMom6He);
 
- INEL_V_6He.boost(INboostVect);
- INEL_V_2H.boost(INboostVect);
-//G4cout<<pumpkin-(newE2H+newE6He-mass6He-mass2H)<<"	"<<pumpkin<<G4endl;
+		//CM PART
+		lv6He_IN.rotate(0,	theta_CM,	0);
+		lv6He_IN.rotate(0,	0,				phi_CM	);
+		lv2H_IN.rotate(0,		-theta_CM,	0	);
+		lv2H_IN.rotate(0,		0,				-phi_CM	);
+			
+		G4LorentzVector lv2H_CM_IN(lv2H_IN);
+		G4LorentzVector lv6He_CM_IN(lv6He_IN);
+
+		lv6He_IN.boost(boostVect_IN);
+		lv2H_IN.boost(boostVect_IN);
+
 
 		//NEUTRON EMISSION - negligible lifetime of excited 6He allows for immidiate decay
- G4LorentzVector V_of_CM_excited_6He = INEL_V_6He;
- G4ThreeVector DECAYboostVect = V_of_CM_excited_6He.boostVector();
- 	//neutrons are sitting and waiting for some action
- double decayE=mass6He+Ex6He-(mass4He+2*massNeut);
- double momRatio = CLHEP::RandFlat::shoot(0.1,1);
+		G4LorentzVector lv6He_exc_IN = lv6He_IN;
+		G4ThreeVector boostVect_6He = lv6He_exc_IN.boostVector();
+		//neutrons are sitting and waiting for some action
+		G4double decayE = mass6He + excitedStateEnergy_6He -(mass4He + 2*massNeut);
+		G4double momRatio = CLHEP::RandFlat::shoot(0.1,1);
 
 		//Setting neutron vectors
 		//4He + 2n decay of 6He is classical - differences are negligible
- double neut1Theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
- double neut1Phi_CM = CLHEP::RandFlat::shoot(0.0,2*double(CLHEP::pi));
- double neut2Theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
- double neut2Phi_CM = CLHEP::RandFlat::shoot(0.0,2*double(CLHEP::pi));
- CLHEP::Hep3Vector V_neut_1 (0,0,1);
- CLHEP::Hep3Vector V_neut_2 (0,0,1);
- V_neut_1.rotate(0,	neut1Theta_CM,	0	);
- V_neut_1.rotate(0,	0,	neut1Phi_CM	);
- V_neut_2.rotate(0,	neut2Theta_CM,	0	);
- V_neut_2.rotate(0,	0,	neut2Phi_CM	);
- CLHEP::Hep3Vector V_4He (0,0,1);
- double V1_cos_V2 = cos(V_neut_1.angle(V_neut_2));
- //G4cout<<"angle w.r.t. another1: "<<V_neut_1.angle(V_neut_2)*180/CLHEP::pi<<G4endl;
- double L_fac = momRatio*momRatio+2*momRatio*V1_cos_V2+1;
+		G4double neut1Theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
+		G4double neut1Phi_CM = CLHEP::RandFlat::shoot(0.0,2*G4double(CLHEP::pi));
+		G4double neut2Theta_CM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
+		G4double neut2Phi_CM = CLHEP::RandFlat::shoot(0.0,2*G4double(CLHEP::pi));
 
- double momNeu1=sqrt(2*decayE*mass4He*massNeut/(mass4He*(1+momRatio*momRatio)+massNeut*L_fac));
- double momNeu2 = momRatio*momNeu1;
- double mom4He	= momNeu1*sqrt(L_fac);
- double eneNeu1 = momNeu1*momNeu1/(2*massNeut);
- double eneNeu2 = momNeu2*momNeu2/(2*massNeut);
- double ene4He	= mom4He*mom4He/(2*mass4He);
- 
- G4LorentzVector LV_Neut1(V_neut_1,massNeut+eneNeu1);
- G4LorentzVector LV_Neut2(V_neut_2,massNeut+eneNeu2);
- G4LorentzVector LV_4He=(-LV_Neut1-LV_Neut2);
- LV_4He.setE(ene4He+mass4He);
- //LV_4He.setRho(mom4He);
- 
- 
-//mass6He-(mass4He+2*massNeut)
+		G4ThreeVector vneu1 (0,0,1);
+		G4ThreeVector vneu2 (0,0,1);
+		vneu1.rotate(0,	neut1Theta_CM,	0	);
+		vneu1.rotate(0,	0,	neut1Phi_CM	);
+		vneu2.rotate(0,	neut2Theta_CM,	0	);
+		vneu2.rotate(0,	0,	neut2Phi_CM	);
 
- LV_4He.boost(DECAYboostVect);
- LV_Neut1.boost(DECAYboostVect);
- LV_Neut2.boost(DECAYboostVect);
- //auto T4He = LV_4He.e()-mass4He;
- //auto TN1 = LV_Neut1.e()-massNeut;
- //auto TN2 = LV_Neut2.e()-massNeut;
- //G4cout<<"Yo mamma: "<<(beam_T-(LV_Neut1.e()-massNeut+LV_Neut2.e()-massNeut+LV_4He.e()-mass4He+INEL_V_2H.e()-mass2H))/MeV<<" neu1: "<<TN1-eneNeu1<<" neu2: "<<TN2-eneNeu2<<" differece: "<<(LV_4He.rho()+LV_Neut2.rho()+LV_Neut1.rho())*eV<<G4endl;
+		G4ThreeVector v4He (0,0,1);
+		G4double cos_angle_between_neutrons = cos(vneu1.angle(vneu2));
+		G4double L_fac = momRatio * momRatio + 2*momRatio * cos_angle_between_neutrons + 1;
+		G4double momNeu1=sqrt(2*decayE*mass4He*massNeut/(mass4He*(1+momRatio*momRatio)+massNeut*L_fac));
+		G4double momNeu2 = momRatio*momNeu1;
+		G4double mom4He	= momNeu1*sqrt(L_fac);
+		G4double eneNeu1 = momNeu1*momNeu1/(2*massNeut);
+		G4double eneNeu2 = momNeu2*momNeu2/(2*massNeut);
+		G4double ene4He	= mom4He*mom4He/(2*mass4He);
+		
+		G4LorentzVector lvNeut1(vneu1,massNeut+eneNeu1);
+		G4LorentzVector lvNeut2(vneu2,massNeut+eneNeu2);
+		G4LorentzVector lv4He_IN=(-lvNeut1-lvNeut2);
+		lv4He_IN.setE(ene4He+mass4He);
 
- //G4cout<<(beam_T-(T4He+TN1+TN2+INEL_V_2H.e()-mass2H)+(mass6He-(mass4He+2*massNeut)))/keV<<" =before coll, after coll= "<<G4endl;
-
-
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxx	PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
- G4PrimaryParticle *	INEL_PrimaryParticle_2H=new G4PrimaryParticle(def2H); //0 PP
- INEL_PrimaryParticle_2H->SetKineticEnergy(INEL_V_2H.e()-mass2H);
- INEL_PrimaryParticle_2H->SetMomentumDirection(INEL_V_2H.vect().unit());
- 
- ParticleInfo *INelasticINFO = new ParticleInfo;
- INEL_PrimaryParticle_2H->SetUserInformation(INelasticINFO);
- INelasticINFO->Set_LV_Beam(V_BEAM);
- INelasticINFO->Set_LV_2H_CM(LV_deut_CM_inel);
-
- G4PrimaryParticle * INEL_pp4He=new G4PrimaryParticle(def4He);
- INEL_pp4He->SetKineticEnergy(LV_4He.e()-mass4He);
- INEL_pp4He->SetMomentumDirection(LV_4He.vect().unit());
- 
- G4PrimaryParticle * INEL_ppNeutron_1=new G4PrimaryParticle(defNeut);
- INEL_ppNeutron_1->SetKineticEnergy(LV_Neut1.e()-massNeut);
- INEL_ppNeutron_1->SetMomentumDirection(LV_Neut1.vect().unit());
-
- G4PrimaryParticle * INEL_ppNeutron_2=new G4PrimaryParticle(defNeut);
- INEL_ppNeutron_2->SetKineticEnergy(LV_Neut2.e()-massNeut);
- INEL_ppNeutron_2->SetMomentumDirection(LV_Neut2.vect().unit());
- 
- inelasticVertex = new G4PrimaryVertex(VertexPosition,0);
+		lv4He_IN.boost(boostVect_6He);
+		lvNeut1.boost(boostVect_6He);
+		lvNeut2.boost(boostVect_6He);
+	//
+	//
+	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	//xxxxxxxxxxxxxx	INELASTIC PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+	//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	
- inelasticVertex->SetPrimary(INEL_PrimaryParticle_2H);				//0
- inelasticVertex->SetPrimary(INEL_pp4He);				//1
- inelasticVertex->SetPrimary(INEL_ppNeutron_1);		//2
- inelasticVertex->SetPrimary(INEL_ppNeutron_2);		//3
+		G4PrimaryParticle *PrimaryParticle_2H_IN = new G4PrimaryParticle(defTar); //0 PP
+		PrimaryParticle_2H_IN->SetKineticEnergy(lv2H_IN.e()-lv2H_IN.m());
+		PrimaryParticle_2H_IN->SetMomentumDirection(lv2H_IN.vect().unit());
+		
+		ParticleInfo *INelasticINFO = new ParticleInfo;
+		PrimaryParticle_2H_IN->SetUserInformation(INelasticINFO);
+		INelasticINFO->Set_LV_Beam(lvBeam);
+		INelasticINFO->Set_LV_2H_CM(lv2H_CM_IN);
+		INelasticINFO->Set_LV_6He_CM(lv6He_CM_IN);
 
+		G4PrimaryParticle *PrimaryParticle_4He_IN = new G4PrimaryParticle(def4He);
+		PrimaryParticle_4He_IN->SetKineticEnergy(lv4He_IN.e()-mass4He);
+		PrimaryParticle_4He_IN->SetMomentumDirection(lv4He_IN.vect().unit());
+		
+		G4PrimaryParticle *PrimaryParticle_Neutron1_IN=new G4PrimaryParticle(defNeut);
+		PrimaryParticle_Neutron1_IN->SetKineticEnergy(lvNeut1.e()-massNeut);
+		PrimaryParticle_Neutron1_IN->SetMomentumDirection(lvNeut1.vect().unit());
 
-int EL_or_INEL = rand() % 10;
-if (EL_or_INEL == 0)
-{
-	anEvent->AddPrimaryVertex(inelasticVertex);
-}
-else
-{
-	anEvent->AddPrimaryVertex(elasticVertex);
-}
-
-
-anEvent->AddPrimaryVertex(elasticVertex);
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxx	END OF INELASTIC PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-	}
+		G4PrimaryParticle * PrimaryParticle_Neutron2_IN=new G4PrimaryParticle(defNeut);
+		PrimaryParticle_Neutron2_IN->SetKineticEnergy(lvNeut2.e()-massNeut);
+		PrimaryParticle_Neutron2_IN->SetMomentumDirection(lvNeut2.vect().unit());
+		
+		inelasticVertex = new G4PrimaryVertex(VertexPosition,0);
+			
+		inelasticVertex->SetPrimary(PrimaryParticle_2H_IN);				//0
+		inelasticVertex->SetPrimary(PrimaryParticle_4He_IN);				//1
+		//inelasticVertex->SetPrimary(PrimaryParticle_Neutron1_IN);		//2
+		//inelasticVertex->SetPrimary(PrimaryParticle_Neutron2_IN);		//3
+		anEvent->AddPrimaryVertex(inelasticVertex);
 	
-	double 
-	PrimaryGeneratorAction::get_E(double E, double r, G4Material* mat)
+	*/
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxx	d,t kinematics	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+/*
+		G4LorentzVector lv6He_DT(lvBeam);
+		G4LorentzVector lv2H_DT(lvTarget);
+		G4LorentzVector lvCM_DT = lv6He_DT + lv2H_DT;
+
+		G4ThreeVector boostVect_DT = lvCM_DT.boostVector();
+		lv6He_DT.boost(-boostVect_DT);
+		lv2H_DT.boost(-boostVect_DT);
+		//Let's go d,t now!
+		G4double Qdt = (mass2H + mass6He) - (mass3H + mass5He);
+		G4double eneCM = lv2H_DT.e() + lv6He_DT.e();
+		G4double kinECMBefore = lv2H_DT.e() - lv2H_DT.m() + lv6He_DT.e() - lv6He_DT.m();
+		G4double kinECMAfter = kinECMBefore + Qdt;
+		G4double kinE3H	= (kinECMAfter/(2.0*eneCM))*(kinECMAfter+2.0*mass5He);
+		G4double ene3H	= kinE3H + mass3H;
+		G4double kinE5He = (kinECMAfter/(2.0*eneCM))*(kinECMAfter+2.0*mass3H);
+		G4double ene5He = kinE5He + mass5He;
+		G4double newMom3H	= sqrt(ene3H*ene3H-mass3H*mass3H);
+		G4double newMom5He = sqrt(ene5He*ene5He-mass5He*mass5He);
+
+		G4ThreeVector v3H(lv2H_DT.vect());
+		G4ThreeVector v5He(lv6He_DT.vect());
+		v3H.setMag(newMom3H);
+		v5He.setMag(newMom5He);
+		G4LorentzVector lv3H;
+		G4LorentzVector lv5He;
+		lv3H.setVectMag(v3H, mass3H);
+		lv3H.setTheta(theta_CM);
+		lv3H.setPhi(phi_CM);
+		realTheta = lv3H.vect().angle(lvBeam.vect());
+
+		lv5He.setVectMag(v5He, mass5He);
+		lv5He.setVect(-lv3H);
+		G4LorentzVector lv3H_CM(lv3H);
+		G4LorentzVector lv5He_CM(lv5He);
+
+		lv3H.boost(boostVect_DT);
+		lv5He.boost(boostVect_DT);
+
+
+		//NEUTRON EMISSION - negligible lifetime of 5He allows for immidiate decay
+		G4ThreeVector boostVect_5He = lv5He.boostVector();
+		G4double dt_Q = mass5He - (mass4He + massNeut);
+		G4double dt_eneCM = mass5He;
+		G4double dt_kinECMBefore = 0.0;
+		G4double dt_kinECMAfter = dt_kinECMBefore + dt_Q;
+		G4double dt_kinENeut = (dt_kinECMAfter/(2.0*dt_eneCM))*(dt_kinECMAfter+2.0*mass4He);
+		G4double dt_eneNeut = dt_kinENeut + massNeut;
+		G4double dt_kinE4He = (dt_kinECMAfter/(2.0*dt_eneCM))*(dt_kinECMAfter+2.0*massNeut);
+		G4double dt_ene4He = dt_kinE4He + mass4He;
+		G4double dt_momNeut	= sqrt(dt_eneNeut*dt_eneNeut-massNeut*massNeut);
+		G4double dt_mom4He = sqrt(dt_ene4He*dt_ene4He-mass4He*mass4He);
+
+		//printf("dt_Q: %f\tkinENeut: %f\tkinE4He: %f\tmomNeut: %f\tmom4He: %f\n", dt_Q, dt_kinENeut, dt_kinE4He, dt_momNeut, dt_mom4He);
+
+		//Setting neutron vectors
+		//4He + n decay of 5He is classical - differences are negligible
+		G4double thetaNCM = acos(CLHEP::RandFlat::shoot(-1.0,1.0));
+		G4double phiNCM = CLHEP::RandFlat::shoot(0.0, 2.0*CLHEP::pi);
+
+		G4ThreeVector dt_vNeut(0.0,0.0,1.0);
+		G4ThreeVector dt_v4He(0.0,0.0,1.0);
+		dt_vNeut.setMag(dt_momNeut);
+		dt_v4He.setMag(dt_mom4He);
+		G4LorentzVector dt_lvNeut;
+		G4LorentzVector dt_lv4He;
+		dt_lvNeut.setVectMag(dt_vNeut, massNeut);
+		dt_lvNeut.setTheta(thetaNCM);
+
+		dt_lv4He.setVectMag(dt_v4He, mass4He);
+		dt_lv4He.setTheta(CLHEP::pi-thetaNCM);
+		dt_lv4He.setPhi(phiNCM);
+
+		dt_lvNeut.boost(boostVect_DT);
+		dt_lv4He.boost(boostVect_5He);
+
+		//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//xxxxxxxxxxxxxx	DT PRIMARIES PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+		//deuterium
+		G4PrimaryParticle *PrimaryParticle_3H_DT = new G4PrimaryParticle(def3H);
+		//G4PrimaryParticle *PrimaryParticle_3H_DT = new G4PrimaryParticle(def3H);
+		PrimaryParticle_3H_DT->SetKineticEnergy(lv3H.e()-lv3H.m());
+		PrimaryParticle_3H_DT->SetMomentumDirection(lv3H.vect().unit());
+		//I put all particles, that are not in PrimaryVertex into ParticleInfo of 2H
+		//That is: lv2H_CM, lv6He_CM and lvBeam
+		ParticleInfo *dtParticleInfo = new ParticleInfo;
+		PrimaryParticle_3H_DT->SetUserInformation(dtParticleInfo);
+		dtParticleInfo->Set_LV_Beam(lvBeam);
+		dtParticleInfo->Set_LV_2H_CM(lv3H_CM);
+		dtParticleInfo->Set_LV_6He_CM(lv5He_CM);
+		dtParticleInfo->Set_LV_5He(lv5He);
+		dtParticleInfo->Set_thetaCM(realTheta*TMath::RadToDeg());
+
+		dtParticleInfo->Set_MWPC_1_X(in_MWPC_1_X);
+		dtParticleInfo->Set_MWPC_2_X(in_MWPC_2_X);
+		dtParticleInfo->Set_MWPC_1_Y(in_MWPC_1_Y);
+		dtParticleInfo->Set_MWPC_2_Y(in_MWPC_2_Y);
+
+		dtParticleInfo->Set_nx1(in_nx1);
+		dtParticleInfo->Set_nx2(in_nx2);
+		dtParticleInfo->Set_ny1(in_ny1);
+		dtParticleInfo->Set_ny2(in_ny2);
+
+		//Helium 5
+
+		/*
+		G4PrimaryParticle *PrimaryParticle_5He_DT = new G4PrimaryParticle(def5He);
+		PrimaryParticle_5He_DT->SetKineticEnergy(lv5He.e()-mass5He);	
+		PrimaryParticle_5He_DT->SetMomentumDirection(lv5He.vect().unit() );
+		
+		G4PrimaryParticle *PrimaryParticle_4He_DT = new G4PrimaryParticle(def4He);
+		PrimaryParticle_4He_DT->SetKineticEnergy(dt_lv4He.e()-mass4He);	
+		PrimaryParticle_4He_DT->SetMomentumDirection(dt_lv4He.vect().unit() );
+		dtVertex = new G4PrimaryVertex(VertexPosition,0);
+		dtVertex->SetPrimary(PrimaryParticle_3H_DT);
+		dtVertex->SetPrimary(PrimaryParticle_4He_DT);
+		anEvent->AddPrimaryVertex(dtVertex);
+	
+*/
+}
+	
+G4double PrimaryGeneratorAction::get_E(G4double E, G4double r, G4Material* mat)
 {
-	double R0=ELC->GetRange(E,def6He,mat);
-	double R;
+	G4double R0=ELC->GetRange(E,def6He,mat);
+	G4double R;
 	R = R0 - r;
-	double E1=ELC->GetKinEnergy(R,def6He,mat);
+	G4double E1=ELC->GetKinEnergy(R,def6He,mat);
 	return E1;
 }
 
-double
-PrimaryGeneratorAction::get_R(double E, G4Material* mat)
+G4double PrimaryGeneratorAction::get_R(G4double E, G4Material* mat)
 {
-	double R0=ELC->GetRange(E,def6He,mat);
+	G4double R0=ELC->GetRange(E,def6He,mat);
  
 	return R0;
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-

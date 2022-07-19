@@ -1,91 +1,112 @@
+//file:///home/zalewski/aku/geant4/src/EventAction.cc
 #include "EventAction.hh"
+#include "g4root.hh"
+#include "Randomize.hh"
+#include <iomanip>
 #include "cesiumHit.hh"
 #include "siliconHit.hh"
-
 #include "G4SystemOfUnits.hh"
 #include "G4RunManager.hh"
 #include "G4Event.hh"
 #include "G4UnitsTable.hh"
 #include "G4HCofThisEvent.hh"
-#include "G4VHitsCollection.hh"	
-#include <G4SDManager.hh>
+#include "G4VHitsCollection.hh"
+#include "G4SDManager.hh"
 
-#include "g4root.hh"
-#include "Randomize.hh"
-#include <iomanip>
-
+#include <sys/ioctl.h> // For ioctl, TIOCGWINSZ
+#include <unistd.h> // For STDOUT_FILENO
 
 EventAction::EventAction():
 	G4UserEventAction()
 {
 	tree=NULL;
-	v2H=NULL;
-	v6He=NULL;
-	vBEAM=NULL;
-
+	lv2H=NULL;
+	lv6He=NULL;
+	lvBeam=NULL;
 }
 EventAction::EventAction(TTree *T):
 	G4UserEventAction(),
 	fsiliconHCID(-1),
 	fcesiumHCID(-1)
 {
-	
 	tree=T;
+	//Work on getting TLorentVector to the outTree
+	//Success? Getting TLorentzVector out of the tree is possible, but I still get warnings from TTree
+	v2H = new TVector3();
+	v6He = new TVector3();
+	lv2H = new TLorentzVector();
+	lv5He = new TLorentzVector();
+	lv6He = new TLorentzVector();
+	lvBeam = new TLorentzVector();
+	lv2H_CM = new TLorentzVector();
+	lv6He_CM = new TLorentzVector();
 
-	lv2H = new G4LorentzVector();
-	lv6He = new G4LorentzVector();
-	lvBEAM = new G4LorentzVector();
-	lvDeutCM = new G4LorentzVector();
-	tree->Bronch("vBEAM.","G4LorentzVector",&vBEAM);
-	tree->Bronch("v2H.","G4LorentzVector",&v2H);
-	tree->Bronch("v6He.","G4LorentzVector",&v6He);
-	tree->Bronch("vDeutCM.","G4LorentzVector",&vDeutCM);
-
+	struct winsize size;
+	ioctl(STDOUT_FILENO,TIOCGWINSZ,&size);
+	consoleWidth = size.ws_col-8;
+	
+	tree->Bronch("flvBeam.",		"TLorentzVector",		&lvBeam);
+	tree->Bronch("lv2H.",		"TLorentzVector", 	&lv2H);
+	tree->Bronch("lv5He.",		"TLorentzVector", 	&lv5He);
+	tree->Bronch("lv6He.",		"TLorentzVector", 	&lv6He);
+	tree->Bronch("lv2H_CM.",	"TLorentzVector", 	&lv2H_CM);
+	tree->Bronch("lv6He_CM.",	"TLorentzVector", 	&lv6He_CM);
+	
 	//Deuterium part 
-	//tree->Branch("thetaDeut",&thetaDeut,"thetaDeut/D");
-	//tree->Branch("phiDeut",&phiDeut,"phiDeut/D");
-	tree->Branch("Tdeut",&Tdeut,"Tdeut/D");
-	tree->Branch("CsIdeut", CsIdeut, "CsIdeut[16]/D");
-	tree->Branch("SideutX", SideutX, "SideutX[16]/D");
-	tree->Branch("SideutY", SideutY, "SideutY[16]/D");
-	tree->Branch("deutEDEP", &deutEDEP, "deutEDEP/D");
+	tree->Branch("cal_CsI_L", 	cal_CsI_L, 	"cal_CsI_L[16]/D");
+	tree->Branch("cal_SQX_L", 	cal_SQX_L, 	"cal_SQX_L[32]/D");
+	tree->Branch("cal_SQY_L",	cal_SQY_L, 	"cal_SQY_L[16]/D");
+	tree->Branch("fsqlang",		&sqlang, 	"fsqlang/D");
+	tree->Branch("fsqrang5He",	&sqrang5He, 	"fsqrang5He/D");
+	tree->Branch("fsqlde",		&sqlde,		"fsqlde/D");
+	tree->Branch("fsqletot",	&sqletot,	"fsqletot/D");
 
 	//Helium part
-	//tree->Branch("thetaHe",&thetaHe,"thetaHe/D");
-	//tree->Branch("phiHe",&phiHe,"phiHe/D");
-	tree->Branch("The",&The,"The/D");
-	tree->Branch("CsIhe", CsIhe, "CsIhe[16]/D");
-	tree->Branch("SiheY", SiheY, "SiheY[16]/D");
-	tree->Branch("SiheX", SiheX, "SiheX[16]/D");
-	tree->Branch("heEDEP", &heEDEP, "heEDEP/D");
+
+	tree->Branch("cal_CsI_R",		cal_CsI_R,		"cal_CsI_R[16]/D");
+	tree->Branch("cal_SQY_R",		cal_SQY_R,		"cal_SQY_R[16]/D");
+	tree->Branch("cal_SQX_R",		cal_SQX_R,		"cal_SQX_R[32]/D");
+	tree->Branch("fsqrang",		&sqrang,		"fsqrang/D");
+	tree->Branch("fsqrde",		&sqrde,		"fsqrde/D");
+	tree->Branch("fsqretot",	&sqretot,	"fsqretot/D");
 
 	//BEAM
-	tree->Branch("mazz",&mazz,"mazz/D");
-	tree->Branch("Tbeam",&Tbeam,"Tbeam/D");
-	tree->Branch("thetaCM",&thetaCM,"thetaCM/D");
-	//tree->Branch("phiCM",&phiCM,"phiCM/D");	
-	tree->Branch("Xpos",&Xpos,"Xpos/D");
-	tree->Branch("Ypos",&Ypos,"Ypos/D");
-	tree->Branch("Zpos",&Zpos,"Zpos/D");
+	tree->Branch("fbeamT",	&beamT,	"fbeamT/D");
+	tree->Branch("tof",		&tof,	"tof/D");
+	tree->Branch("fThetaCM",		&thetaCM,	"fThetaCM/D");
+	tree->Branch("fevx",		&evx,		"fevx/D");
+	tree->Branch("fevy",		&evy,		"fevy/D");
+	tree->Branch("fevz",		&evz,		"fevz/D");
 
-	tree->Branch("X6He",&X6He,"X6He/D");
-	tree->Branch("Y6He",&Y6He,"Y6He/D");
-	tree->Branch("Z6He",&Z6He,"Z6He/D");
+	tree->Branch("fX6He",	&X6He,	"fX6He/D");
+	tree->Branch("fY6He",	&Y6He,	"fY6He/D");
+	tree->Branch("fZ6He",	&Z6He,	"fZ6He/D");
+	tree->Branch("fSQX_R_strip",	&fSQX_R_strip,	"fSQX_R_strip/I");
 
-	tree->Branch("X2H",&X2H,"X2H/D");
-	tree->Branch("Y2H",&Y2H,"Y2H/D");
-	tree->Branch("Z2H",&Z2H,"Z2H/D");
 
-	//ReCo
-	tree->Branch("reTheta6He", &reTheta6He, "reTheta6He/D");
-	tree->Branch("reTheta2H", &reTheta2H, "reTheta2H/D");
-	tree->Branch("labAngHe", &labAngHe, "labAngHe/D");
-	tree->Branch("labAng2H", &labAng2H, "labAng2H/D");
-	
-	
-	tree->Branch("exp1",&exp1,"exp1/d");
+	tree->Branch("fX2H",		&X2H,		"fX2H/D");
+	tree->Branch("fY2H",		&Y2H,		"fY2H/D");
+	tree->Branch("fZ2H",		&Z2H,		"fZ2H/D");
+	tree->Branch("fSQX_L_strip",	&fSQX_L_strip,	"fSQX_L_strip/I");
 
-	//ReCo
+	tree->Branch("fEve2H",	&fEve2H,	"fEve2H/B");
+	tree->Branch("fEve6He",	&fEve6He,"fEve6He/B");
+
+	tree->Branch("MWPC_1_X", &MWPC_1_X,	 "MWPC_1_X/D");
+	tree->Branch("MWPC_2_X", &MWPC_2_X,	 "MWPC_2_X/D");
+	tree->Branch("MWPC_1_Y", &MWPC_1_Y,	 "MWPC_1_Y/D");
+	tree->Branch("MWPC_2_Y", &MWPC_2_Y,	 "MWPC_2_Y/D");
+
+	tree->Branch("nx1", &nx1,	 "nx1/D");
+	tree->Branch("nx2", &nx2,	 "nx2/D");
+	tree->Branch("ny1", &ny1,	 "ny1/D");
+	tree->Branch("ny2", &ny2,	 "ny2/D");
+
+	//create ghost columns for compatibility with experimental data
+	tree->Branch("cal_SQ300", cal_SQ300,	 "cal_SQ300[16]/D");
+	tree->Branch("tSQX_L", 	tSQX_L,	 "tSQX_L[16]/s");
+	tree->Branch("tSQX_R", 	tSQX_R,	 "tSQX_R[16]/s");
+	tree->Branch("geo", 		&geo,	 "geo/I");
 
 }
 
@@ -93,178 +114,241 @@ EventAction::~EventAction()
 {
 	if(v2H) delete v2H;
 	if(v6He) delete v6He;
-	if(vBEAM) delete vBEAM;
-	if(vDeutCM) delete vDeutCM;
+	if(lv2H) delete lv2H;
+	if(lv5He) delete lv5He;
+	if(lv6He) delete lv6He;
+	if(lv6He_CM) delete lv6He_CM;
+	if(lvBeam) delete lvBeam;
+	if(lv2H_CM) delete lv2H_CM;
 }
-
 
 void EventAction::BeginOfEventAction(const G4Event *event)
 {
+	Long_t nEntries = G4RunManager::GetRunManager()->GetNumberOfEventsToBeProcessed();
 /*
-	// initialisation per event
+	std::cout << "[";
+	int pos = consoleWidth * progress;
+	for (int i = 0; i < consoleWidth; ++i)
+	{
+		if (i < pos) std::cout << "#";
+		else if (i == pos) std::cout << ">";
+		else std::cout << ".";
+	}
+	std::cout << "] " << int(progress * 100.0) << " %\r";
+	std::cout.flush();
+
+	if( event->GetEventID() % ( nEntries / 100 ) == 0) progress += 0.01;
+*/	// initialisation per event
 	auto sdManager = G4SDManager::GetSDMpointer();
-	fsiliconHCID = sdManager->GetCollectionID("sensSilicon/siliconColl");
-	fcesiumHCID = sdManager->GetCollectionID("sensCesium/cesiumColl");
-*/
-	//Beam
-	ParticleInfo* particleInfo=(ParticleInfo*)p->GetUserInformation();
-	G4LorentzVector V_BEAM(particleInfo->Get_LV_Beam());
-	G4LorentzVector CM_2H(particleInfo->Get_LV_DeutCM());
+	fsiliconHCID = sdManager->GetCollectionID("siliconColl");
+	fcesiumHCID = sdManager->GetCollectionID("cesiumColl");
 
-	G4PrimaryParticle *p = event->GetPrimaryVertex(0)->GetPrimary(0);
-	v2H = p->GetMomentumDirection();
-	Tdeut = p->GetKineticEnergy()/MeV;
-	thetaDeut = 180.*(p->GetMomentumDirection().getTheta())/double(CLHEP::pi);
-	phiDeut = 180.*(p->GetMomentumDirection().getPhi())/double(CLHEP::pi);
-	lv2H->setVectM(*v2H, p->GetMass());
+	//2H scattered
+	G4PrimaryParticle *PrimaryParticle_2H = event->GetPrimaryVertex(0)->GetPrimary(0);
+	v2H->SetXYZ(PrimaryParticle_2H->GetPx(), PrimaryParticle_2H->GetPy(), PrimaryParticle_2H->GetPz());
+	lv2H->SetVectM(*v2H, PrimaryParticle_2H->GetMass());
+
+	//6He scattered
+	G4PrimaryParticle *PrimaryParticle_6He = event->GetPrimaryVertex(0)->GetPrimary(1);
+	v6He->SetXYZ(PrimaryParticle_6He->GetPx(), PrimaryParticle_6He->GetPy(), PrimaryParticle_6He->GetPz());
+	lv6He->SetVectM(*v6He, PrimaryParticle_6He->GetMass());
+
+	//beam, (deuterium and helium in CM)
+		
+	ParticleInfo *particleInfo=(ParticleInfo*)PrimaryParticle_2H->GetUserInformation();
+
+	tmp_lvBeam = new G4LorentzVector(particleInfo->Get_LV_Beam());	
+	lvBeam->SetPxPyPzE(tmp_lvBeam->px(), tmp_lvBeam->py(), tmp_lvBeam->pz(), tmp_lvBeam->e());
+
+	tmp_lv2H_CM = new G4LorentzVector(particleInfo->Get_LV_2H_CM());
+	lv2H_CM->SetPxPyPzE(tmp_lv2H_CM->px(), tmp_lv2H_CM->py(), tmp_lv2H_CM->pz(), tmp_lv2H_CM->e());
 	
+	phiCM = tmp_lv2H_CM->phi();
+
+	tmp_lv5He = new G4LorentzVector(particleInfo->Get_LV_5He());
+	lv5He->SetPxPyPzE(tmp_lv5He->px(), tmp_lv5He->py(), tmp_lv5He->pz(), tmp_lv5He->e());
+
+	tmp_lv6He_CM = new G4LorentzVector(particleInfo->Get_LV_6He_CM());
+	lv6He_CM->SetPxPyPzE(tmp_lv6He_CM->px(), tmp_lv6He_CM->py(), tmp_lv6He_CM->pz(), tmp_lv6He_CM->e());
+	thetaCM = particleInfo->Get_thetaCM();
+
+	TLorentzVector m_lvTar(0.0,0.0,0.0,cs::mass2H);
+	TLorentzVector m_lvCM = *lvBeam + m_lvTar;
+	corrthetaCM = lv6He_CM->Vect().Angle(m_lvCM.Vect());
+
+	MWPC_1_X = particleInfo->Get_MWPC_1_X();
+	MWPC_2_X = particleInfo->Get_MWPC_2_X();
+	MWPC_1_Y = particleInfo->Get_MWPC_1_Y();
+	MWPC_2_Y = particleInfo->Get_MWPC_2_Y();
+
+	nx1 = particleInfo->Get_nx1();
+	nx2 = particleInfo->Get_nx2();
+	ny1 = particleInfo->Get_ny1();
+	ny2 = particleInfo->Get_ny2();
+
+	sqlang = lvBeam->Angle(*v2H) * TMath::RadToDeg();
+	sqrang5He = lvBeam->Angle(lv5He->Vect()) * TMath::RadToDeg();
+	sqrang = lvBeam->Angle(*v6He) * TMath::RadToDeg();
+
+	beamT = lvBeam->E()-lvBeam->M();
+	tof = (cs::tofBase)/(lvBeam->Beta()*cs::c);
+
+	//double E_IN_CM_deut = IN_CM_deut.e();
+
+	evx = event->GetPrimaryVertex(0)->GetX0()*mm;
+	evy = event->GetPrimaryVertex(0)->GetY0()*mm;
+	evz = event->GetPrimaryVertex(0)->GetZ0()*mm;
+
 	
-	
-	vDeutCM = p->GetMomentumDirection();
-	Tbeam =V_BEAM.e();
-	vBEAM->SetPxPyPzE(px,py,pz,Tbeam);
-
-	double E_IN_CM_deut = IN_CM_deut.e();
-	lvDeutCM->SetPxPyPzE(px,py,pz,E_IN_CM_deut);
-
-			
-	p= event->GetPrimaryVertex(0)->GetPrimary(1);	//scattered helium
-	v6He = p->GetMomentumDirection();
-	The = p->GetKineticEnergy();
-	thetaHe = 180.*(p->GetMomentumDirection().getTheta())/double(CLHEP::pi);
-	phiHe = 180.*(p->GetMomentumDirection().getPhi())/double(CLHEP::pi);
-	lv6He->setVectM(*v6He, p->GetMass());
-	mass6He = 5605.53497;
-
-//G4cout<<E_IN_CM_deut-mass2H<<" CM= "<<Tbeam-mass6He<<" LAB= "<<G4endl;
-	Xpos = event->GetPrimaryVertex(0)->GetX0()/mm;
-	Ypos = event->GetPrimaryVertex(0)->GetY0()/mm;
-	Zpos = event->GetPrimaryVertex(0)->GetZ0()/1000/mm;
-
+	//printf("evX: %f\tevY: %f\tevZ: %f\n\n", evx, evy, evz);
 }
 
 
-void EventAction::EndOfEventAction(const G4Event* event)
+void EventAction::EndOfEventAction(const G4Event *event)
 {
+	//G4cout<<"I am starting new EVENT"<<G4endl;
+	G4HCofThisEvent *HCofThisEvent = event->GetHCofThisEvent();
 
-//G4cout<<"I am starting new EVENT"<<G4endl;
-G4HCofThisEvent* hce = event->GetHCofThisEvent();
-
-if(!hce)
-{
-	G4cout<<"dupa"<<G4endl;
-	return;
-}
-
-if (!hce) 
-{
-	G4ExceptionDescription msg1;
-	msg1 << "Bida calkowita" << G4endl; 
-	G4Exception("no cos nie poszlo",
-	"ej,", JustWarning, msg1);
-	return;
-	}	//ending scope on if on hce
-siliconHitsCollection * SiHC = NULL;
-cesiumHitsCollection * CsIHC = NULL;
-SiHC = static_cast<siliconHitsCollection*>(hce->GetHC(fsiliconHCID));
-CsIHC = static_cast<cesiumHitsCollection*>(hce->GetHC(fcesiumHCID));
-
-	if (!SiHC && !CsIHC) 
+	if(!HCofThisEvent)
 	{
-	G4ExceptionDescription msg2;
-	msg2 << "Bida czesciowa" << G4endl; 
-	G4Exception("no cos nie poszlo",
-	"ej,", JustWarning, msg2);
-	return;
-
-
-	}//ending scope on if on SiHC && CsIHC
-
-	G4int SipixelNo=0;
-	G4int SistripNo=0;
-	G4int SidetectorNo=0;
-	G4int CsIpixelNo=0;
-	G4int CsIstripNo=0;
-	G4int CsIdetectorNo=0;
-	stuck=0;
-auto Si_n_hit = SiHC->entries();
-if (Si_n_hit>0)
-	{
-	stuck=((*SiHC)[0])->GetParticle()->GetPDGMass();
-	if (stuck>1.0)
-	{
-	mazz=stuck;
-	}
-	else
-	{
-	mazz=0;
-	}
-	//G4cout<<stuck<<" uuuLALA"<<G4endl;
-	for ( int iii = 0 ; iii < Si_n_hit; iii++)
-	{
-		//siliconHit *hit	= (siliconHit*) SiHC->GetHit(iii);
-		SidetectorNo= ((*SiHC)[iii])->GetDetectorNo();
-
-
-		if (SidetectorNo == 1)
-		{	
-		SipixelNo= 	((*SiHC)[iii])->GetPixelNo();
-		SistripNo= 	((*SiHC)[iii])->GetStripNo();
-		SiheX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
-		SiheY[SistripNo]+=((*SiHC)[iii])->GetEnergy();
-	G4ThreeVector positionAccu = ((*SiHC)[iii])->GetPos();
-	//G4cout<<SipixelNo<<" JESTEM WOW, SUPER WOW "<<positionAccu<<G4endl;
-		}
-		else if(SidetectorNo == 0)
-		{
-		SipixelNo= 	((*SiHC)[iii])->GetPixelNo();
-		SistripNo= 	((*SiHC)[iii])->GetStripNo();
-		SideutX[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
-		SideutY[SistripNo]+=((*SiHC)[iii])->GetEnergy();
-		}
-	}
-	
+		printf("Didn't find HitsCollection!\n");
+		return;
 	}
 
-auto CsI_n_hit = CsIHC->entries();
-if (CsI_n_hit>0)
+	if (!HCofThisEvent) 
 	{
-	//G4cout<<"CsI_n_hit= "<<CsI_n_hit<<G4endl;
-	for ( int iii = 0; iii < CsI_n_hit; iii++)
-		{
-		CsIdetectorNo= 	((*CsIHC)[iii])->GetDetectorNo();
-		if(CsIdetectorNo == 1)
-		{
-		CsIpixelNo= 	((*CsIHC)[iii])->GetPixelNo();
-		CsIstripNo= 	((*CsIHC)[iii])->GetStripNo();
-		CsIhe[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
-		}
-		else if(CsIdetectorNo == 0)
-		{
-		CsIpixelNo= 	((*CsIHC)[iii])->GetPixelNo();
-		CsIstripNo= 	((*CsIHC)[iii])->GetStripNo();
-		CsIdeut[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
-		}
+		G4ExceptionDescription msg1;
+		msg1 << "Bida calkowita" << G4endl; 
+		G4Exception("no cos nie poszlo",
+		"ej,", JustWarning, msg1);
+		return;
 	}
-	}
-if((CsI_n_hit+Si_n_hit)>0)
+
+	siliconHitsCollection *SiHC = nullptr;
+	cesiumHitsCollection *CsIHC = nullptr;
+	SiHC = static_cast<siliconHitsCollection*>(HCofThisEvent->GetHC(fsiliconHCID));
+	CsIHC = static_cast<cesiumHitsCollection*>(HCofThisEvent->GetHC(fcesiumHCID));
+
+	if (fsiliconHCID<0 || fcesiumHCID<0) 
 	{
-	tree->Fill();
+		G4ExceptionDescription msg2;
+		msg2 << "Nie ma Hit collection w EventAction" << G4endl; 
+		G4Exception("no cos nie poszlo",
+		"ej,", JustWarning, msg2);
+		return;
 	}
-		//zeroing Silicon detectors
+
 	SipixelNo=0;
 	SistripNo=0;
 	SidetectorNo=0;
-	std::fill(SideutX,SideutX+16,0);
-	std::fill(SideutY,SideutY+16,0);
-	std::fill(SiheX,SiheX+16,0);
-	std::fill(SiheY,SiheY+16,0);
-
-	//zeroing CesiumIodide detectors
 	CsIpixelNo=0;
 	CsIstripNo=0;
 	CsIdetectorNo=0;
-	std::fill(CsIdeut,CsIdeut+16,0.0);
-	std::fill(CsIhe,CsIhe+16,0.0);
+	sqrde=0;
+	sqlde=0;
+	sqretot=0;
+	sqletot=0;
+	fSQX_L_strip=0;
+	fSQX_R_strip=0;
+
+		//zeroing Silicon detectors
+	std::fill(cal_SQX_L,cal_SQX_L+32,0.0);
+	std::fill(cal_SQY_L,cal_SQY_L+16,0.0);
+	std::fill(cal_SQX_R,cal_SQX_R+32,0.0);
+	std::fill(cal_SQY_R,cal_SQY_R+16,0.0);
+	std::fill(cal_SQ300,cal_SQ300+16,0.0);
+	//zeroing CesiumIodide detectors
+
+	std::fill(cal_CsI_L,cal_CsI_L+16,0.0);
+	std::fill(cal_CsI_R,cal_CsI_R+16,0.0);
+
+	fEve2H = false;
+	fEve6He = false;
+
+	int Si_n_hit = SiHC->entries();
+	if (Si_n_hit>0)
+	{
+		for ( int iii = 0 ; iii < Si_n_hit; iii++)
+		{
+			//siliconHit *hit	= (siliconHit*) SiHC->GetHit(iii);
+			SidetectorNo= ((*SiHC)[iii])->GetDetectorNo();
+			SipixelNo= 	((*SiHC)[iii])->GetPixelNo();
+			SistripNo= 	((*SiHC)[iii])->GetStripNo();
+			G4ThreeVector positionAccu = ((*SiHC)[iii])->GetPos();
+
+			if (SidetectorNo == 1)
+			{
+				if (fEve6He == false)
+				{
+					X6He = ((*SiHC)[iii])->GetPos().x();
+					Y6He = ((*SiHC)[iii])->GetPos().y();
+					Z6He = ((*SiHC)[iii])->GetPos().z();
+					fEve6He = true;
+				} 
+				
+				cal_SQX_R[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
+				cal_SQY_R[SistripNo]+=((*SiHC)[iii])->GetEnergy();
+				//printf("SipixelNo: %d\tSistripNo: %d\tEnergy: %f\n", SipixelNo, SistripNo, ((*SiHC)[iii])->GetEnergy());
+				sqrde+=((*SiHC)[iii])->GetEnergy();
+				fSQX_R_strip = SipixelNo;
+			}
+				
+			else if (SidetectorNo == 0)
+			{
+				if (fEve2H == false)
+				{
+					X2H = ((*SiHC)[iii])->GetPos().x();
+					Y2H = ((*SiHC)[iii])->GetPos().y();
+					Z2H = ((*SiHC)[iii])->GetPos().z();
+					fEve2H = true;
+				} 
+
+				cal_SQX_L[SipixelNo]+=((*SiHC)[iii])->GetEnergy();
+				cal_SQY_L[SistripNo]+=((*SiHC)[iii])->GetEnergy();
+				sqlde+=((*SiHC)[iii])->GetEnergy();
+				fSQX_L_strip = SipixelNo;
+			}
+		}	
+	}
+
+	int CsI_n_hit = CsIHC->entries();
+	if (CsI_n_hit>0)
+	{
+		for ( int iii = 0; iii < CsI_n_hit; iii++)
+		{
+			CsIdetectorNo= 	((*CsIHC)[iii])->GetDetectorNo();
+			CsIpixelNo= 	((*CsIHC)[iii])->GetPixelNo();
+			CsIstripNo= 	((*CsIHC)[iii])->GetStripNo();
+			//printf("DetNo: %d\tEdep: %f\thitNo: %d\n", CsIdetectorNo,((*CsIHC)[iii])->GetEnergy(), iii);
+
+			if(CsIdetectorNo == 0)
+			{
+				cal_CsI_L[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
+				sqletot+=((*CsIHC)[iii])->GetEnergy();
+				//printf("Energia w de:\t%f\tentries: %d\n", cal_CsI_R[CsIpixelNo+4*CsIstripNo], CsI_n_hit);
+			}
+
+			else if(CsIdetectorNo == 1)
+			{
+				cal_CsI_R[CsIpixelNo+4*CsIstripNo]+=((*CsIHC)[iii])->GetEnergy();
+				sqretot+=((*CsIHC)[iii])->GetEnergy();
+				
+				//if (cal_CsI_R[CsIpixelNo+4*CsIstripNo]<0.1) printf("Energia w he:\t%f\n", cal_CsI_R[CsIpixelNo+4*CsIstripNo]);
+			}
+		}
+	}
+
+	geo = cs::runNo/10;
+	if (sqlde>0)
+	{
+		
+	}
 	
+tree->Fill();
+
+	if(tmp_lv5He) delete tmp_lv5He;
+	if(tmp_lv6He_CM) delete tmp_lv6He_CM;
+	if(tmp_lvBeam) delete tmp_lvBeam;
+	if(tmp_lv2H_CM) delete tmp_lv2H_CM;
+
 }

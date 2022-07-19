@@ -27,12 +27,8 @@ cesiumHit::cesiumHit()
 	particle()
 {}
 
-
-
 cesiumHit::~cesiumHit()
 {}
-
-
 
 cesiumHit::cesiumHit(const cesiumHit &right)
 : G4VHit()
@@ -47,9 +43,6 @@ energy	= right.energy;
 particle	= right.particle;
 }
 
-
-
-
 const cesiumHit& cesiumHit::operator=(const cesiumHit &right)
 {
 pixelNo	= right.pixelNo;
@@ -60,17 +53,13 @@ position	= right.position;
 momentum	= right.momentum;
 energy		= right.energy;
 particle	= right.particle;
-	return *this;
+return *this;
 }
-
-
 
 G4int cesiumHit::operator==(const cesiumHit &right) const
 {
 	return ( this == &right ) ? 1 : 0;
 }
-
-
 
 void cesiumHit::Draw()
 {
@@ -89,8 +78,6 @@ void cesiumHit::Draw()
 	}
 }
 
-
-
 void cesiumHit::Print()
 {
 G4cout<<pixelNo<<G4endl;
@@ -102,5 +89,3 @@ G4cout<<pixelNo<<G4endl;
 	<< std::setw(7) << G4BestUnit( fPos,"Length")
 	<< G4endl;*/
 }
-
-

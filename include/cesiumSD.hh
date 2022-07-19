@@ -19,7 +19,7 @@ class cesiumSD : public G4VSensitiveDetector
     virtual void   EndOfEvent(G4HCofThisEvent* HCofEven);
 
   private:
-   cesiumHitsCollection* fHitsCollection;
+   cesiumHitsCollection *fHitsCollection;
    G4int fHCID;
 
 };

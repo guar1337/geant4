@@ -1,40 +1,24 @@
 #include "ParticleInfo.hh"
 
-ParticleInfo::ParticleInfo()
+ParticleInfo::ParticleInfo():
+	ParticleInfo_LV_Beam(0),
+	ParticleInfo_LV_2H_CM(0),
+	ParticleInfo_LV_6He_CM(0),
+	ParticleInfo_LV_5He(0),
+	ParticleInfo_MWPC_1_X(0),
+	ParticleInfo_MWPC_2_X(0),
+	ParticleInfo_MWPC_1_Y(0),
+	ParticleInfo_MWPC_2_Y(0),
+	ParticleInfo_nx1(0),
+	ParticleInfo_nx2(0),
+	ParticleInfo_ny1(0),
+	ParticleInfo_ny2(0),
+	ParticleInfo_thetaCM(0)
 {}
 
 ParticleInfo::~ParticleInfo()
 {}
 
-inline void ParticleInfo::Set_LV_Beam(G4LorentzVector lv_Beam)
-{
-	ParticleInfo_LV_Beam = lv_Beam;
-}
-
-inline void ParticleInfo::Set_LV_2H_CM(G4LorentzVector lv2H_CM)
-{
-	ParticleInfo_LV_2H_CM = lv2H_CM;
-}
-
-inline void ParticleInfo::Set_LV_6He_CM(G4LorentzVector lv_6He_CM)
-{
-	ParticleInfo_LV_6He_CM = lv_6He_CM;
-}
-
-inline G4LorentzVector ParticleInfo::Get_LV_Beam()
-{
-	return ParticleInfo_LV_Beam;
-}
-
-inline G4LorentzVector ParticleInfo::Get_LV_2H_CM()
-{
-	return ParticleInfo_LV_2H_CM;
-}
-
-inline G4LorentzVector ParticleInfo::Get_LV_6He_CM()
-{
-	return ParticleInfo_LV_6He_CM;
-}
-
 void ParticleInfo::Print() const 
-{}
+{
+}

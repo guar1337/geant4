@@ -9,8 +9,6 @@
 #include <iomanip>
 G4Allocator<siliconHit> siliconHitAllocator;
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 siliconHit::siliconHit()
  : G4VHit(),
    pixelNo(-1),
@@ -23,12 +21,8 @@ siliconHit::siliconHit()
    particle()
 {}
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 siliconHit::~siliconHit()
 {}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 siliconHit::siliconHit(const siliconHit & right)
 : G4VHit()
@@ -44,9 +38,6 @@ particle       = right.particle;
 position       = right.position;
 }
 
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 const siliconHit& siliconHit::operator=(const siliconHit& right)
 {
 pixelNo        = right.pixelNo;
@@ -61,23 +52,15 @@ position       = right.position;
   return *this;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 G4int siliconHit::operator==(const siliconHit &right) const
 {
   return ( this == &right ) ? 1 : 0;
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 void siliconHit::Draw()
 {
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 void siliconHit::Print()
 {
 }
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

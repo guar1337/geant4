@@ -24,11 +24,11 @@ endif()
 find_package(ROOT REQUIRED)
 include(${Geant4_USE_FILE})
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(/home/guar/root/build/include)
+include_directories(/home/zalewski/root/build/include)
 include_directories(/usr/lib/x86_64-linux-gnu/qtcreator/plugins)
 
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 #----------------------------------------------------------------------------
 # Locate sources and headers for this project
 # NB: headers are included so they will show up in IDEs
@@ -42,9 +42,8 @@ file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hh)
 #----------------------------------------------------------------------------
 # Add the executable, and link it to the Geant4 libraries
 #
-set(root_lib libCore.so libPhysics.so libTree.so libRIO.so )
 add_executable(exampleB1 guar.cc ${sources} ${headers})
-target_link_libraries(exampleB1 ${Geant4_LIBRARIES} ${root_lib})
+target_link_libraries(exampleB1 ${Geant4_LIBRARIES} ${ROOT_LIBRARIES})
 #${root_lib}
 #----------------------------------------------------------------------------
 # Copy all scripts to the build directory, i.e. the directory in which we
@@ -57,13 +56,13 @@ set(EXAMPLEB1_SCRIPTS
   beam.mac
   )
 
-foreach(_script ${EXAMPLEB1_SCRIPTS})
-  configure_file(
-    ${PROJECT_SOURCE_DIR}/${_script}
-    ${PROJECT_BINARY_DIR}/${_script}
-    COPYONLY
-    )
-endforeach()
+#foreach(_script ${EXAMPLEB1_SCRIPTS})
+#  configure_file(
+#    ${PROJECT_SOURCE_DIR}/${_script}
+#    ${PROJECT_BINARY_DIR}/${_script}
+#    COPYONLY
+#    )
+#endforeach()
 
 #----------------------------------------------------------------------------
 # For internal Geant4 use - but has no effect if you build this
