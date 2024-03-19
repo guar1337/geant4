@@ -12,6 +12,8 @@ DetectorConstruction::~DetectorConstruction()
 
 G4VPhysicalVolume* DetectorConstruction::Construct()
 {
+	sql_dist = (170.0 - 20.0)*mm;
+	sqr_dist = (250.0 - 30.0)*mm;
 
 		if (geometryID==1)
 		{
@@ -34,9 +36,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 		if (geometryID==3)
 		{
 			deut_angle		= (35.0) *deg;
-			helium_angle	= (15.0 - 1.0)*deg;
+			helium_angle	= (15.0)*deg;
 			target_angle	= 0.0*deg;
-			tarPosition		= 10.0;
+			tarPosition		= 10.0 - 2.0;
 			tarThickness	= 2.0 * (80.0 + cs::tarThicknessShift)*um;
 		}
 		

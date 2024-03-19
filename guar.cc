@@ -20,7 +20,8 @@ int main(int argc,char** argv)
 	TTree *outTree=NULL;
 	std::string geoID = std::to_string(cs::runNo/10);
 	std::string targetMass = std::to_string(cs::tarMass);
-	TString fName = "/home/zalewski/dataTmp/MC/v3/mc_geo" + geoID + "_" + targetMass + "H_big.root";
+	TString fName = "/home/zalewski/dataTmp/MC/v3/mc_geo" + geoID + "_" + targetMass + "H_dt.root";
+
 	outFile = new TFile(fName.Data(),"RECREATE");
 	outTree=new TTree("calibrated","MC events");
 

@@ -54,8 +54,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 		const G4double tar_x = 50.0*mm, tar_y = 40.0*mm;	//Target half-dimensions
 		G4double tarThickness;
 
-		const G4double sql_dist=(170.0 - 20.0)*mm;
-		const G4double sqr_dist=(250.0 - 30.0)*mm;
+		G4double sql_dist;
+		G4double sqr_dist;
 		
 		const G4double world_sizeX = 120.0 * cm;
 		const G4double world_sizeY = 8.0 * cm;

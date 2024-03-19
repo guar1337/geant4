@@ -45,7 +45,7 @@
 			tar_thick = (2.0*60.0)*um;
 			tar_angle = 0.0*TMath::DegToRad();
 			beamFilePath = "/home/zalewski/dataTmp/beamSource/beamSource3.root";
-			tar_pos_Z = 10.0;
+			tar_pos_Z = 10.0 - 2.0;
 		}
 
 
@@ -149,16 +149,12 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 	
 	
 	inBeamTree->GetEntry(inputEventNo);
-	parameters.push_back(-1.0);
-	parameters.push_back(-2.1375);
-	parameters.push_back(0.2);
-	parameters.push_back(-1.125);
 	//generate vertex position
-	MWPC_1_X = in_MWPC_1_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_1_X];
-	MWPC_1_Y = in_MWPC_1_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_1_Y];
+	MWPC_1_X = in_MWPC_1_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 - 1.0;
+	MWPC_1_Y = in_MWPC_1_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 - 2.1375;
 
-	MWPC_2_X = in_MWPC_2_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_2_X];
-	MWPC_2_Y = in_MWPC_2_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + parameters[sMWPC_2_Y];
+	MWPC_2_X = in_MWPC_2_X + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 + 0.2;
+	MWPC_2_Y = in_MWPC_2_Y + CLHEP::RandFlat::shoot(0.0,1.25)-0.625 - 1.125;
 	
 	MWPC_1_Z = -816.0;
 	MWPC_2_Z = -270.0;
@@ -205,7 +201,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxx	START OF elastic PART	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
+/*
 		G4LorentzVector lv6He_EL(lvBeam);
 		G4LorentzVector lv2H_EL(lvTarget);
 		G4LorentzVector lvCM_EL = lv6He_EL+lv2H_EL;
@@ -236,7 +232,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		Double_t kineticEnergyH2 = lv2H_EL.e()-lv2H_EL.m();
 		if (kineticEnergyH2<0.1 && cs::runNo==30 && cs::tarMass==2)
 		{
-			printf("No. of event: %d\tenergy: %f\n", inputEventNo, kineticEnergyH2);
+			//printf("No. of event: %d\tenergy: %f\n", inputEventNo, kineticEnergyH2);
 			kineticEnergyH2 = 100.0;
 		}
 		PrimaryParticle_2H_EL->SetKineticEnergy(kineticEnergyH2);
@@ -272,7 +268,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		anEvent->AddPrimaryVertex(elasticVertex);
 	
 	
-
+*/
 //
 //
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -393,7 +389,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxx	d,t kinematics	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-/*
+
 		G4LorentzVector lv6He_DT(lvBeam);
 		G4LorentzVector lv2H_DT(lvTarget);
 		G4LorentzVector lvCM_DT = lv6He_DT + lv2H_DT;
@@ -474,7 +470,6 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 		//deuterium
 		G4PrimaryParticle *PrimaryParticle_3H_DT = new G4PrimaryParticle(def3H);
-		//G4PrimaryParticle *PrimaryParticle_3H_DT = new G4PrimaryParticle(def3H);
 		PrimaryParticle_3H_DT->SetKineticEnergy(lv3H.e()-lv3H.m());
 		PrimaryParticle_3H_DT->SetMomentumDirection(lv3H.vect().unit());
 		//I put all particles, that are not in PrimaryVertex into ParticleInfo of 2H
@@ -499,7 +494,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 		//Helium 5
 
-		/*
+		
 		G4PrimaryParticle *PrimaryParticle_5He_DT = new G4PrimaryParticle(def5He);
 		PrimaryParticle_5He_DT->SetKineticEnergy(lv5He.e()-mass5He);	
 		PrimaryParticle_5He_DT->SetMomentumDirection(lv5He.vect().unit() );
@@ -512,7 +507,7 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 		dtVertex->SetPrimary(PrimaryParticle_4He_DT);
 		anEvent->AddPrimaryVertex(dtVertex);
 	
-*/
+
 }
 	
 G4double PrimaryGeneratorAction::get_E(G4double E, G4double r, G4Material* mat)
